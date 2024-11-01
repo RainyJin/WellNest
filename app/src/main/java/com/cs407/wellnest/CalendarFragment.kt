@@ -6,19 +6,30 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.applandeo.materialcalendarview.CalendarView
 import com.cs407.wellnest.ui.theme.Red40
+import com.cs407.wellnest.ui.theme.Salmon
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 @Composable
 fun CalendarScreen() {
+    val context = LocalContext.current
+
+    // Get today's date
+    val today = LocalDate.now()
+    val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
     Column(
         modifier = Modifier
@@ -40,18 +51,34 @@ fun CalendarScreen() {
                 .height(400.dp) // Define a fixed height for the calendar
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Box (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        ) {
+            // Selected Date and Event List Header
+            Text(
+                text = formattedDate,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.Center)
+            )
 
-        // Selected Date and Event List Header
-        Text(
-            text = "Thursday Feb 6, 2024",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 110.dp)
-        )
+            IconButton(
+                onClick = {},
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Item",
+                    tint = Salmon
+                )
+            }
+        }
 
         // Countdown List
         LazyColumn(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp)
         ) {
             items(countdownItems) { item ->
