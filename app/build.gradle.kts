@@ -62,7 +62,8 @@ dependencies {
     implementation(libs.material3) // Using version catalog for Material3
     implementation(libs.navigation.compose) // Using version catalog for Navigation Compose
     implementation(libs.material)
-    implementation(libs.material.calendar.view) // Using calendar view for calendar
+    implementation(libs.material.calendar.view)
+    implementation(libs.protolite.well.known.types) // Using calendar view for calendar
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
