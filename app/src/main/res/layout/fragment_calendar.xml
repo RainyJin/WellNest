@@ -5,12 +5,10 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/todo_title"
+    <com.applandeo.materialcalendarview.CalendarView
+        android:id="@+id/calendarView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Calendar"
-        android:textSize="24sp" />
+        android:layout_height="wrap_content" />
 
     <!-- Add other UI components for the To-Do page here -->
 
