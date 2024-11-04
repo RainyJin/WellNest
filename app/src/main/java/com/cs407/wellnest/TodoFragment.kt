@@ -26,15 +26,15 @@ fun TodoScreen() {
             .padding(16.dp)
     ) {
         TopSection()
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         PlaceholderImage(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(52.dp))
         CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
             selectedTabIndex = index // Update selected tab when clicked
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         TodoListSection(selectedTabIndex = selectedTabIndex)
     }
 }
@@ -167,7 +167,7 @@ fun TodoListItem(course: String, description: String, isCompleted: Boolean) {
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 3.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
