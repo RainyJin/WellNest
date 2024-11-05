@@ -1,5 +1,6 @@
 package com.cs407.wellnest
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.rpc.Help
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     // Dark mode state
     val isDarkMode = remember { mutableStateOf(false) }
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
@@ -39,7 +40,10 @@ fun ProfileScreen() {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Settings Section
-        SettingsSection(isDarkMode)
+        SettingsSection(
+            isDarkMode,
+            onAboutUsClick = { navController.navigate("nav_about_us") }
+        )
     }
 }
 
@@ -86,7 +90,7 @@ fun ProfileSection(contentColor: Color) {
 }
 
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>) {
+fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -100,7 +104,11 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>) {
         Text(
             text = "Notification Preferences",
             style = MaterialTheme.typography.titleSmall,
-            color = textColor
+            color = textColor,
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .clickable { onAboutUsClick() }
+
         )
 
         NotificationPreferenceItem("Meditation reminder", isDarkMode.value)
@@ -126,7 +134,10 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>) {
         Text(
             text = "About Us",
             style = MaterialTheme.typography.titleSmall,
-            color = textColor
+            color = textColor,
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .clickable { onAboutUsClick() }
         )
     }
 }
