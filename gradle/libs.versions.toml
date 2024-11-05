@@ -13,6 +13,8 @@ material3 = "1.3.0"
 navigation-compose = "2.8.3"
 materialCalendarView = "1.9.2"
 protoliteWellKnownTypes = "18.0.0"
+storage = "1.5.0"
+uiTestAndroid = "1.7.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,6 +36,8 @@ material3 = { module = "androidx.compose.material3:material3", version.ref = "ma
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 material-calendar-view = { group = "com.applandeo", name = "material-calendar-view", version.ref = "materialCalendarView" }
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
+androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storage" }
+androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

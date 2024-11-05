@@ -2,13 +2,13 @@ package com.cs407.wellnest
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -21,24 +21,30 @@ import androidx.compose.ui.res.painterResource
 
 @Composable
 fun ProfileScreen() {
+    // Dark mode state
+    val isDarkMode = remember { mutableStateOf(false) }
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val contentColor = if (isDarkMode.value) Color.White else Color.Black
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
-        ProfileSection()
+        ProfileSection(contentColor)
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Settings Section
-        SettingsSection()
+        SettingsSection(isDarkMode)
     }
 }
 
 @Composable
-fun ProfileSection() {
+fun ProfileSection(contentColor: Color) {
     Box(
         modifier = Modifier
             .size(100.dp), // Size of the avatar area
@@ -48,18 +54,17 @@ fun ProfileSection() {
         Icon(
             imageVector = Icons.Default.AccountCircle,
             contentDescription = "Profile Avatar",
-            modifier = Modifier
-                .size(100.dp)  // Adjust avatar size as needed
+            modifier = Modifier.size(100.dp),
+            tint = contentColor
         )
 
         // Plus Button
         IconButton(
             onClick = { /* Handle avatar change action here */ },
             modifier = Modifier
-                .size(25.dp)  // Adjust size of the plus icon
+                .size(25.dp)
                 .offset(x = (-4).dp, y = (-4).dp)
                 .background(Color.Black, CircleShape)
-                .align(Alignment.BottomEnd)
                 .padding(2.dp)
         ) {
             Icon(
@@ -75,34 +80,34 @@ fun ProfileSection() {
     // User name text
     Text(
         text = "Bucky",
-        fontSize = 24.sp
+        fontSize = 24.sp,
+        color = contentColor
     )
 }
 
-
-
-
 @Composable
-fun SettingsSection() {
+fun SettingsSection(isDarkMode: MutableState<Boolean>) {
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Setting",
+            text = "Settings",
             style = MaterialTheme.typography.titleMedium,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
         // Notification Preferences
         Text(
             text = "Notification Preferences",
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleSmall,
+            color = textColor
         )
 
-        NotificationPreferenceItem("Meditation reminder")
-        NotificationPreferenceItem("Bedtime reminder")
-        NotificationPreferenceItem("Wake Up reminder")
+        NotificationPreferenceItem("Meditation reminder", isDarkMode.value)
+        NotificationPreferenceItem("Bedtime reminder", isDarkMode.value)
+        NotificationPreferenceItem("Wake Up reminder", isDarkMode.value)
 
-        // Dark Mode Toggle
-        DarkModeToggle()
+        DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -110,23 +115,26 @@ fun SettingsSection() {
         Text(
             text = "Help & Policies",
             style = MaterialTheme.typography.titleSmall,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection()
+        HelpAndPoliciesSection(isDarkMode.value)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // About Us Section
         Text(
             text = "About Us",
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleSmall,
+            color = textColor
         )
     }
 }
 
 @Composable
-fun NotificationPreferenceItem(title: String) {
+fun NotificationPreferenceItem(title: String, isDarkMode: Boolean) {
     val isChecked = remember { mutableStateOf(true) }
+    val textColor = if (isDarkMode) Color.White else Color.Black
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,7 +142,7 @@ fun NotificationPreferenceItem(title: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title)
+        Text(text = title, color = textColor)
         Switch(
             checked = isChecked.value,
             onCheckedChange = { isChecked.value = it }
@@ -143,8 +151,7 @@ fun NotificationPreferenceItem(title: String) {
 }
 
 @Composable
-fun DarkModeToggle() {
-    val isDarkMode = remember { mutableStateOf(false) }
+fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -152,15 +159,17 @@ fun DarkModeToggle() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = "Dark Mode")
+        Text(text = "Dark Mode", color = if (isDarkMode.value) Color.White else Color.Black)
         Switch(
             checked = isDarkMode.value,
             onCheckedChange = { isDarkMode.value = it }
         )
     }
 }
+
 @Composable
-fun HelpAndPoliciesSection() {
+fun HelpAndPoliciesSection(isDarkMode: Boolean) {
+    val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
         painterResource(id = R.drawable.icon_help),
@@ -171,13 +180,13 @@ fun HelpAndPoliciesSection() {
 
     Column {
         options.zip(icons).forEach { (option, icon) ->
-            HelpPolicyItem(option, icon)
+            HelpPolicyItem(option, icon, textColor)
         }
     }
 }
 
 @Composable
-fun HelpPolicyItem(title: String, icon: Painter) {
+fun HelpPolicyItem(title: String, icon: Painter, textColor: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,11 +194,12 @@ fun HelpPolicyItem(title: String, icon: Painter) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title)
+        Text(text = title, color = textColor)
         Icon(
             painter = icon,
             contentDescription = "$title Icon",
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
+            tint = textColor
         )
     }
 }
