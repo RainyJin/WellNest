@@ -62,7 +62,10 @@ dependencies {
     implementation(libs.material3) // Using version catalog for Material3
     implementation(libs.navigation.compose) // Using version catalog for Navigation Compose
     implementation(libs.material)
-    implementation(libs.material.calendar.view) // Using calendar view for calendar
+    implementation(libs.material.calendar.view)
+    implementation(libs.protolite.well.known.types)
+    implementation(libs.androidx.storage)
+    implementation(libs.androidx.ui.test.android) // Using calendar view for calendar
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,4 +73,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation ("androidx.compose.ui:ui:1.5.1" )// Replace with the latest version
+    implementation ("androidx.compose.foundation:foundation:1.5.1")
+    implementation ("androidx.compose.material3:material3:1.1.0") // For Material3 support
+
 }
