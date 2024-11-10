@@ -1,6 +1,7 @@
 package com.cs407.wellnest
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,37 +58,46 @@ fun StatisticsScreen() {
 
 @Composable
 fun TimeRangeContent(timeRange: String) {
-    // This function displays the same content but could be customized based on timeRange
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogType by remember { mutableStateOf("") }
+    var goal by remember { mutableStateOf(20000) } // Default goal
+    var progress by remember { mutableStateOf(5000) } // Example progress value (can be dynamic)
+    var calories by remember { mutableStateOf(185) }
+    var sleep by remember { mutableStateOf(8) }
+    var runDistance by remember { mutableStateOf(5) }
+    var gymHours by remember { mutableStateOf(1) }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Circular Progress
+        // Circular Progress with Clickable Modifier
         Box(
             modifier = Modifier
                 .size(100.dp)
-                .align(Alignment.CenterHorizontally),
+                .align(Alignment.CenterHorizontally)
+                .clickable { showDialog = true; dialogType = "Goal" }, // Show dialog on click
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(
-                progress = 0.25f,
+                progress = progress / goal.toFloat(),
                 color = Color.Green,
                 strokeWidth = 8.dp,
                 modifier = Modifier.size(100.dp)
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("20000", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("25%", fontSize = 14.sp, color = Color.Gray)
+                Text(goal.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("${(progress / goal.toFloat() * 100).toInt()}%", fontSize = 14.sp, color = Color.Gray)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Step, Distance, Calories, Sleep Sections
+        // Step, Distance, Calories, Sleep Sections with Clickable Modifiers
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            InfoBox("Step", "5000 steps", Color(0xFFADD8E6))
+            InfoBox("Step", "$progress steps", Color(0xFFADD8E6))
             InfoBox("Distance", "4.5 km", Color(0xFFADD8E6))
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -95,17 +105,29 @@ fun TimeRangeContent(timeRange: String) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            InfoBox("Calories", "185 kcal", Color(0xFFFFE4B5))
-            InfoBox("Sleep", "8 hours", Color(0xFFADD8E6))
+            InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5), onClick = {
+                showDialog = true
+                dialogType = "Calories"
+            })
+            InfoBox("Sleep", "$sleep hours", Color(0xFFADD8E6), onClick = {
+                showDialog = true
+                dialogType = "Sleep"
+            })
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Workouts Section
+        // Workouts Section with Clickable Items
         Text("Workouts", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        WorkoutItem("Run", "5 km")
-        WorkoutItem("Gym", "1 hour")
+        WorkoutItem("Run", "$runDistance km", onClick = {
+            showDialog = true
+            dialogType = "Run"
+        })
+        WorkoutItem("Gym", "$gymHours hours", onClick = {
+            showDialog = true
+            dialogType = "Gym"
+        })
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -121,15 +143,74 @@ fun TimeRangeContent(timeRange: String) {
             Text("Food log goes here", color = Color.DarkGray)
         }
     }
+
+    // Dialog for Setting Values
+    if (showDialog) {
+        SetValueDialog(
+            currentValue = when (dialogType) {
+                "Calories" -> calories.toString()
+                "Sleep" -> sleep.toString()
+                "Run" -> runDistance.toString()
+                "Gym" -> gymHours.toString()
+                else -> goal.toString()
+            },
+            label = dialogType,
+            onDismiss = { showDialog = false },
+            onConfirm = { newValue ->
+                when (dialogType) {
+                    "Calories" -> calories = newValue.toInt()
+                    "Sleep" -> sleep = newValue.toInt()
+                    "Run" -> runDistance = newValue.toInt()
+                    "Gym" -> gymHours = newValue.toInt()
+                    "Goal" -> goal = newValue.toInt()
+                }
+                showDialog = false
+            }
+        )
+    }
 }
 
 @Composable
-fun InfoBox(label: String, value: String, backgroundColor: Color) {
+fun SetValueDialog(currentValue: String, label: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var text by remember { mutableStateOf(currentValue) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Set $label") },
+        text = {
+            Column {
+                Text("Enter the value for $label:")
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text(label) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                onConfirm(text)
+            }) {
+                Text("Set $label")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun InfoBox(label: String, value: String, backgroundColor: Color, onClick: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .width(160.dp)
             .background(backgroundColor, RoundedCornerShape(8.dp))
             .padding(16.dp)
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
     ) {
         Column {
             Text(label, fontSize = 14.sp, color = Color.Black, fontWeight = FontWeight.Bold)
@@ -140,13 +221,13 @@ fun InfoBox(label: String, value: String, backgroundColor: Color) {
 }
 
 @Composable
-fun WorkoutItem(name: String, details: String) {
+fun WorkoutItem(name: String, details: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFB2DFDB), RoundedCornerShape(8.dp))
             .padding(16.dp)
-            .padding(vertical = 4.dp)
+            .clickable { onClick() }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
