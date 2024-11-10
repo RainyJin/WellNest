@@ -65,7 +65,7 @@ fun BottomNavigationBar(navController: NavController) {
             NavigationBarItem(
                 icon = { Icon(painterResource(item.icon), contentDescription = item.title) },
                 label = { Text(item.title) },
-                selected = false, // You can manage selected state based on navController
+                selected = false, //
                 onClick = {
                     navController.navigate(item.route) {
                         // Avoid multiple copies of the same destination
