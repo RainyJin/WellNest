@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,14 +25,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WellNestTheme {
-                MainScreen()
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = "start_screen"
+                ) {
+                    composable("start_screen") {
+                        StartScreen(navController)
+                    }
+                    composable("main_screen") {
+                        MainScreen()
+                    }
+                }
             }
         }
     }
 }
 
+
+
 @Composable
 fun MainScreen() {
+   val isDarkMode = remember { mutableStateOf(false) }
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
@@ -65,7 +81,7 @@ fun BottomNavigationBar(navController: NavController) {
             NavigationBarItem(
                 icon = { Icon(painterResource(item.icon), contentDescription = item.title) },
                 label = { Text(item.title) },
-                selected = false, // You can manage selected state based on navController
+                selected = false, //
                 onClick = {
                     navController.navigate(item.route) {
                         // Avoid multiple copies of the same destination
