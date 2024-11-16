@@ -40,7 +40,7 @@ fun TodoScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp) // Additional padding within inner padding
+                .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
             TopSection()
             Spacer(modifier = Modifier.height(32.dp))
@@ -51,8 +51,15 @@ fun TodoScreen(navController: NavController) {
             CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
                 selectedTabIndex = index // Update selected tab when clicked
             }
-            Spacer(modifier = Modifier.height(10.dp))
-            TodoListSection(selectedTabIndex = selectedTabIndex, navController = navController)
+            Spacer(modifier = Modifier.height(12.dp))
+            TodoListSection(
+                selectedTabIndex = selectedTabIndex,
+                navController = navController,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
         }
     }
 }
@@ -125,7 +132,9 @@ fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun TodoListSection(selectedTabIndex: Int, navController: NavController) { // Pass NavController
+fun TodoListSection(selectedTabIndex: Int,
+                    navController: NavController,
+                    modifier: Modifier = Modifier) { // Pass NavController
     val academicGoals = when (selectedTabIndex) {
         0 -> listOf(
             TodoItem("CS 407", "Complete Zybooks Chapter 6", false),
@@ -141,7 +150,14 @@ fun TodoListSection(selectedTabIndex: Int, navController: NavController) { // Pa
         )
     }
 
-    LazyColumn {
+    LazyColumn(
+        modifier = modifier.fillMaxHeight(), // Ensure it stretches vertically
+        contentPadding = PaddingValues(
+            bottom = WindowInsets.systemBars
+                .asPaddingValues()
+                .calculateBottomPadding()
+        )
+    ) {
         item {
             Text("Today:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
         }
