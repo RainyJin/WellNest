@@ -68,7 +68,7 @@ dependencies {
     implementation(libs.androidx.ui.test.android) // Using calendar view for calendar
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
@@ -76,5 +76,12 @@ dependencies {
     implementation ("androidx.compose.ui:ui:1.5.1" )// Replace with the latest version
     implementation ("androidx.compose.foundation:foundation:1.5.1")
     implementation ("androidx.compose.material3:material3:1.1.0") // For Material3 support
+    implementation ("io.coil-kt:coil-compose:2.1.0")
+    implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.25")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-gif:2.5.0")
+
 
 }
