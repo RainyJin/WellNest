@@ -16,15 +16,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.navigation.NavController
+import com.applandeo.materialcalendarview.CalendarDay
 import com.applandeo.materialcalendarview.CalendarView
 import com.cs407.wellnest.ui.theme.Red40
 import com.cs407.wellnest.ui.theme.Salmon
+import com.cs407.wellnest.data.CountdownItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Calendar
 
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(navController: NavController) {
     val context = LocalContext.current
 
     // Get today's date
@@ -36,19 +40,21 @@ fun CalendarScreen() {
             .fillMaxSize()
     ) {
         AndroidView(
+            // calendar
             factory = { context ->
                 val view =
                     LayoutInflater.from(context).inflate(R.layout.fragment_calendar, null, false)
 
                 val calendarView = view.findViewById<CalendarView>(R.id.calendarView)
                 calendarView.setHeaderColor(R.color.salmon)
+                calendarView.setCalendarDays(list)
                 // calendarView.setSelectionBackground(R.color.purple_200)
 
                 view
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(400.dp) // Define a fixed height for the calendar
+                .height(400.dp)
         )
 
         Box (
@@ -56,15 +62,16 @@ fun CalendarScreen() {
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         ) {
-            // Selected Date and Event List Header
+            // today's date
             Text(
                 text = formattedDate,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.Center)
             )
 
+            // add button
             IconButton(
-                onClick = {},
+                onClick = { navController.navigate("nav_add_item") },
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
                 Icon(
@@ -75,33 +82,40 @@ fun CalendarScreen() {
             }
         }
 
-        // Countdown List
+        // countdown item list
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp)
         ) {
             items(countdownItems) { item ->
-                CountdownCard(daysLeft = item.daysLeft,
+                CountdownCard(daysLeft = ChronoUnit.DAYS.between(today, item.targetDate),
                     description = item.description,
                     cardColor = Color.White)
             }
         }
     }
+
 }
 
-// Sample data structure for countdown items
-data class CountdownItem(val daysLeft: Int, val description: String)
-
 val countdownItems = listOf(
-    CountdownItem(7, "CS 407 Midterm 📅"),
-    CountdownItem(65, "First Anniversary 💖"),
-    CountdownItem(101, "CS 407 Final 📅"),
-    CountdownItem(109, "Summer Break 🎉")
+    CountdownItem(LocalDate.of(2024, 12, 1), "CS 407 Midterm 📅"),
+    CountdownItem(LocalDate.of(2024, 12, 12), "CS 407 Final 📅"),
+    CountdownItem(LocalDate.of(2025, 2, 9), "First Anniversary 💖"),
+    CountdownItem(LocalDate.of(2025, 5, 12), "Summer Break 🎉")
 )
 
+val list = countdownItems.map { item ->
+    val calendar = Calendar.getInstance().apply {
+        set(item.targetDate.year, item.targetDate.monthValue - 1, item.targetDate.dayOfMonth)
+    }
+    CalendarDay(calendar).apply {
+        backgroundResource = R.drawable.ic_target_date
+    }
+}
+
 @Composable
-fun CountdownCard(daysLeft: Int, description: String, cardColor: Color) {
+fun CountdownCard(daysLeft: Long, description: String, cardColor: Color) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -138,7 +152,7 @@ fun CountdownCard(daysLeft: Int, description: String, cardColor: Color) {
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                // Description
+                // description
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyLarge
