@@ -83,5 +83,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt:coil-gif:2.5.0")
 
+    implementation ("androidx.activity:activity-compose:1.7.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
+
+
 
 }
