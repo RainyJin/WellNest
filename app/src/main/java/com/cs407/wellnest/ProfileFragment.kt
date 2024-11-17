@@ -1,4 +1,5 @@
 package com.cs407.wellnest
+import android.app.TimePickerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -20,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import java.util.Calendar
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -126,9 +129,6 @@ fun ProfileSection(contentColor: Color) {
 
 
 
-
-
-
 @Composable
 fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
@@ -151,7 +151,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
 
         )
 
-        NotificationPreferenceItem("Meditation reminder", isDarkMode.value)
+        MeditationReminderPreference(isDarkMode = isDarkMode.value)
         NotificationPreferenceItem("Bedtime reminder", isDarkMode.value)
         NotificationPreferenceItem("Wake Up reminder", isDarkMode.value)
 
@@ -179,6 +179,66 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
                 .padding(vertical = 8.dp)
                 .clickable { onAboutUsClick() }
         )
+    }
+}
+
+@Composable
+fun MeditationReminderPreference(
+    isDarkMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val textColor = if (isDarkMode) Color.White else Color.Black
+    val timeState = remember { mutableStateOf("No time set") }
+    val isReminderOn = remember { mutableStateOf(false) } // 控制开关状态
+    val calendar = Calendar.getInstance()
+
+    // 时间选择器
+    val timePickerDialog = TimePickerDialog(
+        LocalContext.current,
+        { _, hourOfDay, minute ->
+            val timeString = String.format("%02d:%02d", hourOfDay, minute)
+            timeState.value = timeString
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    )
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Meditation Reminder", color = textColor)
+
+            // 开关按钮
+            Switch(
+                checked = isReminderOn.value,
+                onCheckedChange = { isChecked ->
+                    isReminderOn.value = isChecked
+                    if (isChecked) {
+                        // 当开关打开时，弹出时间选择对话框
+                        timePickerDialog.show()
+                    } else {
+                        // 关闭时重置时间
+                        timeState.value = "No time set"
+                    }
+                }
+            )
+        }
+
+        // 显示设置的时间或默认文本
+        if (isReminderOn.value) {
+            Text(
+                text = "Reminder set for: ${timeState.value}",
+                color = textColor,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
     }
 }
 
