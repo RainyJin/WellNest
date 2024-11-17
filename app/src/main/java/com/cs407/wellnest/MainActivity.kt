@@ -57,7 +57,8 @@ fun MainScreen() {
             startDestination = "nav_todo",
             Modifier.padding(innerPadding)
         ) {
-            composable("nav_todo") { TodoScreen() } // Reference to the To-Do screen
+            composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
+            composable("meditation") { MeditationScreen(navController)}
             composable("nav_calendar") { CalendarScreen() } // Reference to the Calendar screen
             composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
             composable("nav_profile") {ProfileScreen(navController)  } // Reference to the Profile screen
