@@ -151,9 +151,23 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
 
         )
 
-        MeditationReminderPreference(isDarkMode = isDarkMode.value)
-        NotificationPreferenceItem("Bedtime reminder", isDarkMode.value)
-        NotificationPreferenceItem("Wake Up reminder", isDarkMode.value)
+        //Meditation Reminder
+                ReminderPreference(
+                    title = "Meditation Reminder",
+                    isDarkMode = isDarkMode.value
+                )
+
+        // Bedtime Reminder
+        ReminderPreference(
+            title = "Bedtime Reminder",
+            isDarkMode = isDarkMode.value
+        )
+
+        // Wake Up Reminder
+        ReminderPreference(
+            title = "Wake Up Reminder",
+            isDarkMode = isDarkMode.value
+        )
 
         DarkModeToggle(isDarkMode)
 
@@ -183,16 +197,17 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
 }
 
 @Composable
-fun MeditationReminderPreference(
+fun ReminderPreference(
+    title: String,
     isDarkMode: Boolean,
     modifier: Modifier = Modifier
 ) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val timeState = remember { mutableStateOf("No time set") }
-    val isReminderOn = remember { mutableStateOf(false) } // 控制开关状态
+    val isReminderOn = remember { mutableStateOf(false) }
     val calendar = Calendar.getInstance()
 
-    // 时间选择器
+    // Time picker dialog
     val timePickerDialog = TimePickerDialog(
         LocalContext.current,
         { _, hourOfDay, minute ->
@@ -212,25 +227,23 @@ fun MeditationReminderPreference(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Meditation Reminder", color = textColor)
+            Text(text = title, color = textColor)
 
-            // 开关按钮
+            // Switch for enabling/disabling the reminder
             Switch(
                 checked = isReminderOn.value,
                 onCheckedChange = { isChecked ->
                     isReminderOn.value = isChecked
                     if (isChecked) {
-                        // 当开关打开时，弹出时间选择对话框
                         timePickerDialog.show()
                     } else {
-                        // 关闭时重置时间
                         timeState.value = "No time set"
                     }
                 }
             )
         }
 
-        // 显示设置的时间或默认文本
+        // Display the selected time or default message
         if (isReminderOn.value) {
             Text(
                 text = "Reminder set for: ${timeState.value}",
