@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -25,8 +26,14 @@ fun TodoScreen(navController: NavController) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                // Navigate to a screen for adding a new item
-                navController.navigate("edit_todo/new")
+                val backgroundColor = if (selectedTabIndex == 0) {
+                    Color(0xFF5BBAE9) // Light Blue for Academics
+                } else {
+                    Color(0xFF48AB4C) // Green for Health
+                }
+
+                // Navigate with the selectedTabIndex and background color
+                navController.navigate("edit_todo/new/$selectedTabIndex/${backgroundColor.toArgb()}")
             }) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
@@ -62,6 +69,7 @@ fun TodoScreen(navController: NavController) {
             )
         }
     }
+
 }
 
 @Composable
@@ -134,15 +142,18 @@ fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
 @Composable
 fun TodoListSection(selectedTabIndex: Int,
                     navController: NavController,
-                    modifier: Modifier = Modifier) { // Pass NavController
+                    modifier: Modifier = Modifier) {
+    val backgroundColor = when (selectedTabIndex) {
+        0 -> Color(0xFF5BBAE9) // Light Blue for Academics
+        else -> Color(0xFF48AB4C) // Green for Health
+    }
+
     val academicGoals = when (selectedTabIndex) {
         0 -> listOf(
             TodoItem("CS 407", "Complete Zybooks Chapter 6", false),
             TodoItem("Folklore 100", "Read 'Our Lady's Maid...'", true),
             TodoItem("Math 101", "Prepare for Midterm Exam", false),
             TodoItem("Physics 201", "Submit Lab Report", false),
-            TodoItem("History 102", "Study for Final", true),
-            TodoItem("English 202", "Draft Essay", false)
         )
         else -> listOf(
             TodoItem("40 minutes of Treadmill", "", false),
@@ -168,7 +179,7 @@ fun TodoListSection(selectedTabIndex: Int,
                 isCompleted = todoItem.isCompleted,
                 onClick = {
                     // Navigate to the edit screen with the item ID (e.g., course name)
-                    navController.navigate("edit_todo/${todoItem.course}")
+                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
                 }
             )
         }
@@ -185,7 +196,7 @@ fun TodoListSection(selectedTabIndex: Int,
                 isCompleted = todoItem.isCompleted,
                 onClick = {
                     // Navigate to the edit screen with a placeholder ID
-                    navController.navigate("edit_todo/new")
+                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
                 }
             )
         }

@@ -12,7 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import android.app.DatePickerDialog
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -23,20 +23,36 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun EditTodoScreen(itemName: String, navController: NavController) {
+fun EditTodoScreen(itemName: String, navController: NavController, backgroundColor: Color) {
     var goalText by remember { mutableStateOf(TextFieldValue(itemName)) }
     var descriptionText by remember { mutableStateOf(TextFieldValue("")) }
     var selectedRepeatOption by remember { mutableStateOf("Does not repeat") }
     var expandedDropdown by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(getCurrentDate()) }
-    var isDatePickerVisible by remember { mutableStateOf(false) }
 
     val repeatOptions = listOf("Does not repeat", "Daily", "Weekly", "Monthly")
+
+    var selectedDate by remember { mutableStateOf(getCurrentDate()) }
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = DatePickerDialog(
+        navController.context,
+        { _, year, month, day ->
+            selectedDate = "$month/$day/$year"
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    val (saveButtonColor, suggestionColor) = when (backgroundColor) {
+        Color(0xFF5BBAE9) -> Color(0xFF338FBD) to Color(0xFFD3E7F7) // Lighter blue
+        Color(0xFF48AB4C) -> Color(0xFF48AB4C) to Color(0xFFD0F0D4) // Lighter green
+        else -> Color.Black to Color.Gray // Default fallback
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF5BBAE9)) // Light blue background
+            .background(backgroundColor)
             .padding(16.dp)
     ) {
         // Card containing the goal, description, calendar, and repeat options
@@ -49,7 +65,7 @@ fun EditTodoScreen(itemName: String, navController: NavController) {
         ) {
             Column(
                 modifier = Modifier
-                    .padding(vertical = 10.dp, horizontal = 20.dp)
+                    .padding(vertical = 6.dp, horizontal = 20.dp)
             ) {
                 // Top bar with title and close button
                 Row(
@@ -105,34 +121,20 @@ fun EditTodoScreen(itemName: String, navController: NavController) {
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Calendar", fontSize = 16.sp, color = Color.Black)
+                        Text(
+                            text = selectedDate,
+                            fontSize = 16.sp,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .clickable { datePickerDialog.show() }
+                                .padding(8.dp) // Optional padding for better touch interaction
+                        )
                     }
 
-                    Text(
-                        text = selectedDate,
-                        fontSize = 16.sp,
-                        color = Color.Blue,
-                        modifier = Modifier
-                            .clickable {
-                                // Show the DatePicker directly when clicked
-                                isDatePickerVisible = true
-                            }
-                            .padding(8.dp)
-                    )
+
                 }
 
-                // Custom DatePicker Dialog
-                if (isDatePickerVisible) {
-                    DatePickerDialog(
-                        onDismissRequest = { isDatePickerVisible = false },
-                        onDateSelected = { date ->
-                            selectedDate = date
-                            isDatePickerVisible = false
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Repeat options dropdown
                 Row(
@@ -140,18 +142,26 @@ fun EditTodoScreen(itemName: String, navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Repeat", fontSize = 16.sp, color = Color.Black)
-
-                    // Clickable text that toggles the dropdown
-                    Text(
-                        text = selectedRepeatOption,
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        modifier = Modifier
-                            .clickable { expandedDropdown = !expandedDropdown }
-                            .padding(8.dp) // Optional padding for better touch interaction
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar), // Replace with your calendar icon resource
+                            contentDescription = "Calendar",
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // Clickable text that toggles the dropdown
+                        Text(
+                            text = selectedRepeatOption,
+                            fontSize = 16.sp,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .clickable { expandedDropdown = !expandedDropdown }
+                                .padding(8.dp) // Optional padding for better touch interaction
+                        )
+                    }
                 }
+
                 // Box to overlay the dropdown menu
                 Box(modifier = Modifier.fillMaxWidth()) {
                     if (expandedDropdown) {
@@ -174,6 +184,16 @@ fun EditTodoScreen(itemName: String, navController: NavController) {
                         }
                     }
                 }
+
+                // Save button beneath the "Does not repeat" section
+                Spacer(modifier = Modifier.height(16.dp)) // Add space before the save button
+                Button(
+                    onClick = { navController.navigate("nav_todo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = saveButtonColor)
+                ) {
+                    Text("Save", fontSize = 16.sp)
+                }
             }
         }
 
@@ -195,96 +215,12 @@ fun EditTodoScreen(itemName: String, navController: NavController) {
                 .padding(6.dp)
         ) {
             items(suggestions) { suggestion ->
-                SuggestionItem(suggestion)
+                SuggestionItem(suggestion, suggestionColor)
             }
         }
 
-        // Action buttons (outside of Card)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = { /* Save action */ },
-                modifier = Modifier.weight(1f).padding(4.dp)
-            ) {
-                Text("Save")
-            }
-            Button(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(6.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-            ) {
-                Text("Cancel")
-            }
-        }
     }
 }
-
-
-@Composable
-fun DatePickerDialog(
-    onDismissRequest: () -> Unit,
-    onDateSelected: (String) -> Unit
-) {
-    // Get the current context inside the composable function
-    val context = LocalContext.current
-
-    // State for the selected date
-    val selectedDate = remember { mutableStateOf(getCurrentDate()) }
-
-    // Custom date picker dialog
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = { Text("Select Date") },
-        text = {
-            // You can use DatePicker here for selecting the date
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val calendar = Calendar.getInstance()
-                val year = calendar.get(Calendar.YEAR)
-                val month = calendar.get(Calendar.MONTH)
-                val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-                val datePickerDialog = android.app.DatePickerDialog(
-                    context, // Now using the context correctly
-                    { _, selectedYear, selectedMonth, selectedDay ->
-                        val formattedDate = "$selectedYear-${selectedMonth + 1}-$selectedDay"
-                        selectedDate.value = formattedDate
-                    },
-                    year,
-                    month,
-                    day
-                )
-
-                // Directly show the date picker when the dialog is shown
-                LaunchedEffect(Unit) {
-                    datePickerDialog.show()
-                }
-
-                Text("Selected Date: ${selectedDate.value}", fontSize = 16.sp)
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onDateSelected(selectedDate.value) // Passing the selected date to the parent
-                    onDismissRequest() // Dismissing the dialog
-                }
-            ) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            Button(onClick = { onDismissRequest() }) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-
 
 fun getCurrentDate(): String {
     val calendar = Calendar.getInstance()
@@ -293,12 +229,12 @@ fun getCurrentDate(): String {
 }
 
 @Composable
-fun SuggestionItem(suggestion: String) {
+fun SuggestionItem(suggestion: String, backgroundColor: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(6.dp)
-            .background(Color(0xFFB3E5FC), MaterialTheme.shapes.medium)
+            .background(backgroundColor, MaterialTheme.shapes.medium)
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

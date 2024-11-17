@@ -9,14 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cs407.wellnest.ui.theme.WellNestTheme
 
 class MainActivity : ComponentActivity() {
@@ -49,10 +52,26 @@ fun MainScreen() {
             composable("nav_profile") { ProfileScreen(navController) }
             composable("nav_about_us") { AboutUsScreen(navController) }
 
-            // Route for editing a specific to-do item
-            composable("edit_todo/{itemId}") { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getString("itemId")
-                EditTodoScreen(itemName = itemId ?: "", navController = navController)
+            // Editing a todo
+            composable(
+                "edit_todo/{course}/{selectedTabIndex}/{backgroundColor}",
+                arguments = listOf(
+                    navArgument("course") { type = NavType.StringType },
+                    navArgument("selectedTabIndex") { type = NavType.IntType },
+                    navArgument("backgroundColor") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val course = backStackEntry.arguments?.getString("course") ?: ""
+                val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
+                val backgroundColorInt = backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
+                val backgroundColor = Color(backgroundColorInt.toLong())
+
+
+                EditTodoScreen(
+                    itemName = course,
+                    navController,
+                    backgroundColor = backgroundColor,
+                )
             }
         }
     }
