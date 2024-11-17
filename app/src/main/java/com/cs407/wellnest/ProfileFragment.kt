@@ -1,4 +1,7 @@
 package com.cs407.wellnest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.painter.Painter
@@ -14,11 +17,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -49,22 +55,50 @@ fun ProfileScreen(navController: NavController) {
 
 @Composable
 fun ProfileSection(contentColor: Color) {
+    // State to hold the selected avatar URI
+    val avatarUri = remember { mutableStateOf<String?>(null) }
+
+    // Launcher for selecting an image
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            avatarUri.value = uri?.toString()
+        }
+    )
+
     Box(
         modifier = Modifier
-            .size(100.dp), // Size of the avatar area
+            .size(100.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
-        // Avatar Icon
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Avatar",
-            modifier = Modifier.size(100.dp),
-            tint = contentColor
-        )
+        // Use rememberAsyncImagePainter inside the composable context
+        val painter = if (avatarUri.value != null) {
+            rememberAsyncImagePainter(avatarUri.value)
+        } else {
+            null
+        }
 
-        // Plus Button
+        if (painter != null) {
+            Image(
+                painter = painter,
+                contentDescription = "Profile Avatar",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = "Default Avatar",
+                modifier = Modifier.size(100.dp),
+                tint = contentColor
+            )
+        }
+
+        // Plus button to open file picker
         IconButton(
-            onClick = { /* Handle avatar change action here */ },
+            onClick = { launcher.launch("image/*") },
             modifier = Modifier
                 .size(25.dp)
                 .offset(x = (-4).dp, y = (-4).dp)
@@ -88,6 +122,12 @@ fun ProfileSection(contentColor: Color) {
         color = contentColor
     )
 }
+
+
+
+
+
+
 
 @Composable
 fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit) {
