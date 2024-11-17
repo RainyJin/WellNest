@@ -1,6 +1,8 @@
 package com.cs407.wellnest
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -19,13 +21,35 @@ import androidx.navigation.NavController
 import com.cs407.wellnest.ui.theme.DeepPink
 import com.cs407.wellnest.ui.theme.LightPink
 import com.cs407.wellnest.ui.theme.MidPink
+import java.util.Calendar
 
 @Composable
 fun AddItemFragment(navController: NavController) {
+    // input field, date picker, and repeat option default texts
     var eventName by remember { mutableStateOf("") }
+    var selectedRepeatOption by remember { mutableStateOf("Does not repeat") }
+    var selectedDate by remember { mutableStateOf("Today") }
+
+    // hardcoded suggestion list
     val suggestions = remember {
         mutableStateListOf("Birthday", "Folklore 100 Final", "School Starts")
     }
+
+    // dropdown menu
+    var expandedDropdown by remember { mutableStateOf(false) }
+    val repeatOptions = listOf("Does not repeat", "Daily", "Weekly", "Monthly", "Yearly")
+
+    // date picker dialog
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = DatePickerDialog(
+        navController.context,
+        { _, year, month, day ->
+            selectedDate = "$month/$day/$year"
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
 
     Column(
         modifier = Modifier
@@ -33,12 +57,12 @@ fun AddItemFragment(navController: NavController) {
             .background(LightPink),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Input card
+        // event input card
         Card(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(350.dp)
+                .height(400.dp)
                 .padding(vertical = 40.dp, horizontal = 25.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
@@ -46,7 +70,7 @@ fun AddItemFragment(navController: NavController) {
                 modifier = Modifier
                     .padding(vertical = 10.dp, horizontal = 20.dp)
             ) {
-                // Close button
+                // close button
                 IconButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.align(Alignment.End)
@@ -58,7 +82,7 @@ fun AddItemFragment(navController: NavController) {
                     )
                 }
 
-                // Input field
+                // input field
                 TextField(
                     value = eventName,
                     onValueChange = { eventName = it },
@@ -68,20 +92,55 @@ fun AddItemFragment(navController: NavController) {
                     colors = TextFieldDefaults.colors()
                 )
 
-                Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
-                // Options for date and repeat
+                // calendar and repeat options
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconText(icon = R.drawable.ic_calendar, text = "Today")
-                    IconText(icon = R.drawable.ic_repeat, text = "Does not repeat")
+                    IconText(icon = R.drawable.ic_calendar, text = selectedDate, onClick = { datePickerDialog.show() })
+                    IconText(icon = R.drawable.ic_repeat, text = selectedRepeatOption, onClick = { expandedDropdown = !expandedDropdown})
+                }
+
+                // box to overlay the dropdown menu
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (expandedDropdown) {
+                        DropdownMenu(
+                            expanded = true,
+                            onDismissRequest = { expandedDropdown = false },
+                            modifier = Modifier
+                                .width(300.dp)
+                                .align(Alignment.TopStart)
+                        ) {
+                            repeatOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        selectedRepeatOption = option
+                                        expandedDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // save button
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MidPink),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save")
                 }
             }
+
+
         }
 
-        // Suggestions section
+        // suggestion title
         Text(
             text = "SUGGESTIONS",
             style = MaterialTheme.typography.titleMedium,
@@ -89,7 +148,7 @@ fun AddItemFragment(navController: NavController) {
             color = DeepPink
         )
 
-        // Suggestions list
+        // suggestion list
         suggestions.forEach { suggestion ->
             SuggestionItem(
                 text = suggestion,
@@ -101,16 +160,20 @@ fun AddItemFragment(navController: NavController) {
     }
 }
 
+// clickable icon & text for calendar and repeat options
 @Composable
-fun IconText(icon: Int, text: String) {
+fun IconText(icon: Int, text: String, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = Color.Black
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = text, color = Color.Black)
+        IconButton( onClick = onClick ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = Color.Black
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = text, color = Color.Black,
+            modifier = Modifier.clickable { onClick() })
     }
 }
 
@@ -121,7 +184,7 @@ fun SuggestionItem(text: String, onRemove: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp, horizontal = 25.dp),
-        colors = CardDefaults.cardColors(containerColor = MidPink) // Light red-pink
+        colors = CardDefaults.cardColors(containerColor = MidPink)
     ) {
         Row(
             modifier = Modifier
