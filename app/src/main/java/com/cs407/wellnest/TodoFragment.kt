@@ -61,7 +61,7 @@ fun TopSection() {
             modifier = Modifier.size(48.dp) // Adjust the button size here
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_calendar), // Placeholder icon
+                painter = painterResource(id = R.drawable.ic_meditation), // Placeholder icon
                 contentDescription = "Second Button",
                 modifier = Modifier.size(32.dp) // Adjust the icon size here
             )
