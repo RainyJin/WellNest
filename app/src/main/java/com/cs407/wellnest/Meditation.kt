@@ -10,19 +10,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cs407.wellnest.R
+import kotlinx.coroutines.delay
 
 @Composable
 fun MeditationScreen(navController: NavHostController) {
     val context = LocalContext.current // Get context outside remember
     var isPlaying by remember { mutableStateOf(false) }
+    var timeLeft by remember { mutableStateOf(0) } // Remaining time in seconds
+    var userTimeInput by remember { mutableStateOf("") } // User input for meditation time
+
 
     // Remember and initialize the MediaPlayer
     val mediaPlayer = remember {
         MediaPlayer.create(context, R.raw.rain_sound).apply {
             isLooping = true // Enable looping
+        }
+    }
+
+    // Start a countdown when timeLeft is set
+    LaunchedEffect(timeLeft) {
+        if (timeLeft > 0) {
+            delay(1000L)
+            timeLeft -= 1
+        } else if (isPlaying) {
+            mediaPlayer.pause()
+            isPlaying = false
         }
     }
 
@@ -36,32 +53,62 @@ fun MeditationScreen(navController: NavHostController) {
     ) {
         Text(text = "Relax and Meditate", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
-        IconButton(
-            onClick = {
-                if (isPlaying) {
-                    mediaPlayer.pause()
-                } else {
-                    mediaPlayer.start()
-                }
-                isPlaying = !isPlaying
+
+        Text(
+            text = if (timeLeft > 0) {
+                "Time left: ${timeLeft / 60}:${String.format("%02d", timeLeft % 60)}"
+            } else {
+                "Set your meditation time"
             },
-            modifier = Modifier.size(72.dp)
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = userTimeInput,
+            onValueChange = { userTimeInput = it.filter { char -> char.isDigit() } },
+            label = { Text("Set time (minutes)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                val minutes = userTimeInput.toIntOrNull() ?: 0
+                timeLeft = minutes * 60 // Convert to seconds
+                if (!isPlaying) {
+                    mediaPlayer.start()
+                    isPlaying = true
+                }
+            },
+            enabled = userTimeInput.isNotEmpty()
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_meditation),
-                contentDescription = "Meditation",
-                modifier = Modifier.size(64.dp)
-            )
+            Text("Start Meditation")
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = if (isPlaying) "Pause Rain Sound" else "Play Rain Sound")
-    }
+        Spacer(modifier = Modifier.height(16.dp))
 
-    // Dispose of the MediaPlayer when the Composable leaves the composition
+        Button(
+            onClick = {
+                mediaPlayer.pause()
+                isPlaying = false
+                timeLeft = 0
+            },
+            enabled = isPlaying
+        ) {
+            Text("Stop Meditation")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { navController.popBackStack() }) {
+            Text("Back to Todo Screen")
+        }
+    }
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
         }
     }
 }
+

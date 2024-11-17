@@ -94,7 +94,7 @@ fun ProfileSection(contentColor: Color) {
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = "Default Avatar",
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(120.dp),
                 tint = contentColor
             )
         }
