@@ -15,59 +15,62 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 
 @Composable
-fun TodoScreen() {
+fun TodoScreen(navController: NavHostController) {
+    var showMeditationScreen by remember { mutableStateOf(false) }
 
-    var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        TopSection()
-        Spacer(modifier = Modifier.height(32.dp))
-        PlaceholderImage(
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(52.dp))
-        CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
-            selectedTabIndex = index // Update selected tab when clicked
+    if (showMeditationScreen) {
+        MeditationScreen(onBack = { showMeditationScreen = false })
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            TopSection(onMeditationClick = { navController.navigate("meditation") })
+            Spacer(modifier = Modifier.height(32.dp))
+            PlaceholderImage(
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(52.dp))
+            CategoryTabs(selectedTabIndex = 0) { }
+            Spacer(modifier = Modifier.height(10.dp))
+            TodoListSection(selectedTabIndex = 0)
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        TodoListSection(selectedTabIndex = selectedTabIndex)
     }
 }
 
 @Composable
-fun TopSection() {
+fun TopSection(onMeditationClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(
-            onClick = { /* Navigate to another page */ },
-            modifier = Modifier.size(48.dp) // Adjust the button size here
+            onClick = { /* Another action */ },
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_todo), // Placeholder icon
+                painter = painterResource(id = R.drawable.ic_todo),
                 contentDescription = "First Button",
-                modifier = Modifier.size(32.dp) // Adjust the icon size here
+                modifier = Modifier.size(32.dp)
             )
         }
         IconButton(
-            onClick = { /* Navigate to another page */ },
-            modifier = Modifier.size(48.dp) // Adjust the button size here
+            onClick = onMeditationClick,  // Trigger passed action
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_calendar), // Placeholder icon
+                painter = painterResource(id = R.drawable.ic_meditation),
                 contentDescription = "Second Button",
-                modifier = Modifier.size(32.dp) // Adjust the icon size here
+                modifier = Modifier.size(32.dp)
             )
         }
     }
 }
+
 
 @Composable
 fun PlaceholderImage(modifier: Modifier = Modifier) {
@@ -80,6 +83,24 @@ fun PlaceholderImage(modifier: Modifier = Modifier) {
         Text(text = "Image", fontSize = 18.sp, color = Color.White)
     }
 }
+@Composable
+fun MeditationScreen(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.LightGray)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Meditation Screen", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onBack) {
+            Text("Back to Todo Screen")
+        }
+    }
+}
+
 
 @Composable
 fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
