@@ -63,6 +63,7 @@ fun MainScreen() {
             composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
             composable("nav_profile") {ProfileScreen(navController)  } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController) }
+            composable("survey") { SurveyScreen(navController) }
         }
 
     }

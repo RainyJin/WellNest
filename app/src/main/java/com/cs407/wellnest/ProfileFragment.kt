@@ -51,7 +51,8 @@ fun ProfileScreen(navController: NavController) {
         // Settings Section
         SettingsSection(
             isDarkMode,
-            onAboutUsClick = { navController.navigate("nav_about_us") }
+            onAboutUsClick = { navController.navigate("nav_about_us") },
+            onFeedbackClick = { navController.navigate("survey") }
         )
     }
 }
@@ -130,7 +131,7 @@ fun ProfileSection(contentColor: Color) {
 
 
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit) {
+fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -180,7 +181,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value)
+        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -292,29 +293,33 @@ fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
 }
 
 @Composable
-fun HelpAndPoliciesSection(isDarkMode: Boolean) {
+fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
         painterResource(id = R.drawable.icon_help),
         rememberVectorPainter(image = Icons.Default.Lock),
         painterResource(id = R.drawable.icon_comment),
-        rememberVectorPainter(image = Icons.Default.ArrowForward)
+
     )
 
     Column {
         options.zip(icons).forEach { (option, icon) ->
-            HelpPolicyItem(option, icon, textColor)
+            HelpPolicyItem(option, icon, textColor) {
+                if (option == "Feedback") onFeedbackClick()
+            }
         }
     }
 }
 
+// Ensure HelpPolicyItem is outside HelpAndPoliciesSection
 @Composable
-fun HelpPolicyItem(title: String, icon: Painter, textColor: Color) {
+fun HelpPolicyItem(title: String, icon: Painter, textColor: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
