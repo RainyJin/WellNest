@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -28,14 +30,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WellNestTheme {
-                MainScreen()
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = "start_screen"
+                ) {
+                    composable("start_screen") {
+                        StartScreen(navController)
+                    }
+                    composable("main_screen") {
+                        MainScreen()
+                    }
+                }
             }
         }
     }
 }
 
+
+
 @Composable
 fun MainScreen() {
+   val isDarkMode = remember { mutableStateOf(false) }
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
@@ -46,11 +62,14 @@ fun MainScreen() {
             startDestination = "nav_todo",
             Modifier.padding(innerPadding)
         ) {
-            composable("nav_todo") { TodoScreen(navController) } // Pass navController to TodoScreen
-            composable("nav_calendar") { CalendarScreen() }
-            composable("nav_stat") { StatisticsScreen() }
-            composable("nav_profile") { ProfileScreen(navController) }
+            composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
+            composable("meditation") { MeditationScreen(navController)}
+            composable("nav_calendar") { CalendarScreen() } // Reference to the Calendar screen
+            composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
+            composable("nav_profile") {ProfileScreen(navController)  } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController) }
+            composable("survey") { SurveyScreen(navController) }
+        }
 
             // Editing a todo
             composable(

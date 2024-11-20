@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import java.util.Calendar
 fun CalendarScreen() {
     val context = LocalContext.current
 
+
     // Get today's date
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
@@ -34,6 +36,7 @@ fun CalendarScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+
     ) {
         AndroidView(
             factory = { context ->
