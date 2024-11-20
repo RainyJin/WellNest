@@ -70,8 +70,6 @@ fun MainScreen() {
             composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController) }
             composable("meditation") { MeditationScreen(navController)}
-        }
-
             // Editing a todo
             composable(
                 "edit_todo/{course}/{selectedTabIndex}/{backgroundColor}",
@@ -93,6 +91,7 @@ fun MainScreen() {
                     backgroundColor = backgroundColor,
                 )
             }
+
         }
     }
 }

@@ -49,7 +49,7 @@ fun TodoScreen(navController: NavController) {
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection()
+            TopSection(onMeditationClick = { navController.navigate("meditation") })
             Spacer(modifier = Modifier.height(32.dp))
             PlaceholderImage(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
