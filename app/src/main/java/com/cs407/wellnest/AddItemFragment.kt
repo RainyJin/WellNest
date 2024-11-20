@@ -25,10 +25,14 @@ import java.util.Calendar
 
 @Composable
 fun AddItemFragment(navController: NavController) {
+    val backStackEntry = navController.currentBackStackEntry
+    val eventNameArg = backStackEntry?.arguments?.getString("eventName") ?: ""
+    val eventDateArg = backStackEntry?.arguments?.getString("eventDate") ?: "Today"
+
     // input field, date picker, and repeat option default texts
-    var eventName by remember { mutableStateOf("") }
+    var eventName by remember { mutableStateOf(eventNameArg) }
+    var eventDate by remember { mutableStateOf(eventDateArg) }
     var selectedRepeatOption by remember { mutableStateOf("Does not repeat") }
-    var selectedDate by remember { mutableStateOf("Today") }
 
     // hardcoded suggestion list
     val suggestions = remember {
@@ -44,10 +48,10 @@ fun AddItemFragment(navController: NavController) {
     val datePickerDialog = DatePickerDialog(
         navController.context,
         { _, year, month, day ->
-            selectedDate = "$month/$day/$year"
+            eventDate = "${month + 1}/$day/$year"
         },
         calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
@@ -98,7 +102,7 @@ fun AddItemFragment(navController: NavController) {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconText(icon = R.drawable.ic_calendar, text = selectedDate, onClick = { datePickerDialog.show() })
+                    IconText(icon = R.drawable.ic_calendar, text = eventDate, onClick = { datePickerDialog.show() })
                     IconText(icon = R.drawable.ic_repeat, text = selectedRepeatOption, onClick = { expandedDropdown = !expandedDropdown})
                 }
 

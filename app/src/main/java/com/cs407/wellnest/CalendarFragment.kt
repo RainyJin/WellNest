@@ -2,6 +2,7 @@ package com.cs407.wellnest
 
 import android.view.LayoutInflater
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -94,14 +96,17 @@ fun CalendarScreen(navController: NavController) {
             items(countdownItems) { item ->
                 CountdownCard(daysLeft = ChronoUnit.DAYS.between(today, item.targetDate),
                     description = item.description,
-                    cardColor = Color.White)
+                    cardColor = Color.White,
+                    navController = navController,
+                    onDelete = { countdownItems.remove(item) }
+                )
             }
         }
     }
 
 }
 
-val countdownItems = listOf(
+val countdownItems = mutableListOf(
     CountdownItem(LocalDate.of(2024, 12, 1), "CS 407 Midterm 📅"),
     CountdownItem(LocalDate.of(2024, 12, 12), "CS 407 Final 📅"),
     CountdownItem(LocalDate.of(2025, 2, 9), "First Anniversary 💖"),
@@ -118,14 +123,24 @@ val list = countdownItems.map { item ->
 }
 
 @Composable
-fun CountdownCard(daysLeft: Long, description: String, cardColor: Color) {
+fun CountdownCard(daysLeft: Long,
+                  description: String,
+                  cardColor: Color,
+                  navController: NavController,
+                  onDelete: () -> Unit) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = { onDelete() }
+                )
+            },
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        onClick = { navController.navigate("nav_add_item/$description/${LocalDate.now().plusDays(daysLeft)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
