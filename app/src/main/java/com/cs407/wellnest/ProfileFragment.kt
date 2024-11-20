@@ -1,4 +1,8 @@
 package com.cs407.wellnest
+import android.app.TimePickerDialog
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.painter.Painter
@@ -14,11 +18,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import java.util.Calendar
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -42,29 +51,58 @@ fun ProfileScreen(navController: NavController) {
         // Settings Section
         SettingsSection(
             isDarkMode,
-            onAboutUsClick = { navController.navigate("nav_about_us") }
+            onAboutUsClick = { navController.navigate("nav_about_us") },
+            onFeedbackClick = { navController.navigate("survey") }
         )
     }
 }
 
 @Composable
 fun ProfileSection(contentColor: Color) {
+    // State to hold the selected avatar URI
+    val avatarUri = remember { mutableStateOf<String?>(null) }
+
+    // Launcher for selecting an image
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            avatarUri.value = uri?.toString()
+        }
+    )
+
     Box(
         modifier = Modifier
-            .size(100.dp), // Size of the avatar area
+            .size(100.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
-        // Avatar Icon
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Avatar",
-            modifier = Modifier.size(100.dp),
-            tint = contentColor
-        )
+        // Use rememberAsyncImagePainter inside the composable context
+        val painter = if (avatarUri.value != null) {
+            rememberAsyncImagePainter(avatarUri.value)
+        } else {
+            null
+        }
 
-        // Plus Button
+        if (painter != null) {
+            Image(
+                painter = painter,
+                contentDescription = "Profile Avatar",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = "Default Avatar",
+                modifier = Modifier.size(120.dp),
+                tint = contentColor
+            )
+        }
+
+        // Plus button to open file picker
         IconButton(
-            onClick = { /* Handle avatar change action here */ },
+            onClick = { launcher.launch("image/*") },
             modifier = Modifier
                 .size(25.dp)
                 .offset(x = (-4).dp, y = (-4).dp)
@@ -89,8 +127,11 @@ fun ProfileSection(contentColor: Color) {
     )
 }
 
+
+
+
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit) {
+fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -111,9 +152,23 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
 
         )
 
-        NotificationPreferenceItem("Meditation reminder", isDarkMode.value)
-        NotificationPreferenceItem("Bedtime reminder", isDarkMode.value)
-        NotificationPreferenceItem("Wake Up reminder", isDarkMode.value)
+        //Meditation Reminder
+                ReminderPreference(
+                    title = "Meditation Reminder",
+                    isDarkMode = isDarkMode.value
+                )
+
+        // Bedtime Reminder
+        ReminderPreference(
+            title = "Bedtime Reminder",
+            isDarkMode = isDarkMode.value
+        )
+
+        // Wake Up Reminder
+        ReminderPreference(
+            title = "Wake Up Reminder",
+            isDarkMode = isDarkMode.value
+        )
 
         DarkModeToggle(isDarkMode)
 
@@ -126,7 +181,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value)
+        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -139,6 +194,65 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
                 .padding(vertical = 8.dp)
                 .clickable { onAboutUsClick() }
         )
+    }
+}
+
+@Composable
+fun ReminderPreference(
+    title: String,
+    isDarkMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val textColor = if (isDarkMode) Color.White else Color.Black
+    val timeState = remember { mutableStateOf("No time set") }
+    val isReminderOn = remember { mutableStateOf(false) }
+    val calendar = Calendar.getInstance()
+
+    // Time picker dialog
+    val timePickerDialog = TimePickerDialog(
+        LocalContext.current,
+        { _, hourOfDay, minute ->
+            val timeString = String.format("%02d:%02d", hourOfDay, minute)
+            timeState.value = timeString
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    )
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = title, color = textColor)
+
+            // Switch for enabling/disabling the reminder
+            Switch(
+                checked = isReminderOn.value,
+                onCheckedChange = { isChecked ->
+                    isReminderOn.value = isChecked
+                    if (isChecked) {
+                        timePickerDialog.show()
+                    } else {
+                        timeState.value = "No time set"
+                    }
+                }
+            )
+        }
+
+        // Display the selected time or default message
+        if (isReminderOn.value) {
+            Text(
+                text = "Reminder set for: ${timeState.value}",
+                color = textColor,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
     }
 }
 
@@ -179,29 +293,33 @@ fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
 }
 
 @Composable
-fun HelpAndPoliciesSection(isDarkMode: Boolean) {
+fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
         painterResource(id = R.drawable.icon_help),
         rememberVectorPainter(image = Icons.Default.Lock),
         painterResource(id = R.drawable.icon_comment),
-        rememberVectorPainter(image = Icons.Default.ArrowForward)
+
     )
 
     Column {
         options.zip(icons).forEach { (option, icon) ->
-            HelpPolicyItem(option, icon, textColor)
+            HelpPolicyItem(option, icon, textColor) {
+                if (option == "Feedback") onFeedbackClick()
+            }
         }
     }
 }
 
+// Ensure HelpPolicyItem is outside HelpAndPoliciesSection
 @Composable
-fun HelpPolicyItem(title: String, icon: Painter, textColor: Color) {
+fun HelpPolicyItem(title: String, icon: Painter, textColor: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
