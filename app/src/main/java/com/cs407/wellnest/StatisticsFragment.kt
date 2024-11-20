@@ -18,6 +18,31 @@ import androidx.compose.ui.unit.sp
 fun StatisticsScreen() {
     var selectedTabIndex by remember { mutableStateOf(0) } // Track selected tab index
 
+    // Separate states for each tab
+    var daySteps by remember { mutableStateOf(0) }
+    var dayCalories by remember { mutableStateOf(185) }
+    var daySleep by remember { mutableStateOf(8) }
+    var dayRunDistance by remember { mutableStateOf(5) }
+    var dayGymHours by remember { mutableStateOf(1) }
+    var dayFoodLog by remember { mutableStateOf("") }
+    var dayGoal by remember { mutableStateOf(10000) }
+
+    var weekSteps by remember { mutableStateOf(0) }
+    var weekCalories by remember { mutableStateOf(0) }
+    var weekSleep by remember { mutableStateOf(0) }
+    var weekRunDistance by remember { mutableStateOf(0) }
+    var weekGymHours by remember { mutableStateOf(0) }
+    var weekFoodLog by remember { mutableStateOf("") }
+    var weekGoal by remember { mutableStateOf(70000) }
+
+    var monthSteps by remember { mutableStateOf(0) }
+    var monthCalories by remember { mutableStateOf(0) }
+    var monthSleep by remember { mutableStateOf(0) }
+    var monthRunDistance by remember { mutableStateOf(0) }
+    var monthGymHours by remember { mutableStateOf(0) }
+    var monthFoodLog by remember { mutableStateOf("") }
+    var monthGoal by remember { mutableStateOf(300000) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -49,23 +74,77 @@ fun StatisticsScreen() {
 
         // Display content based on selected tab
         when (selectedTabIndex) {
-            0 -> TimeRangeContent("Day")
-            1 -> TimeRangeContent("Week")
-            2 -> TimeRangeContent("Month")
+            0 -> TimeRangeContent(
+                steps = daySteps,
+                calories = dayCalories,
+                sleep = daySleep,
+                runDistance = dayRunDistance,
+                gymHours = dayGymHours,
+                foodLog = dayFoodLog,
+                goal = dayGoal,
+                onStepsChange = { daySteps = it },
+                onCaloriesChange = { dayCalories = it },
+                onSleepChange = { daySleep = it },
+                onRunDistanceChange = { dayRunDistance = it },
+                onGymHoursChange = { dayGymHours = it },
+                onFoodLogChange = { dayFoodLog = it },
+                onGoalChange = { dayGoal = it }
+            )
+            1 -> TimeRangeContent(
+                steps = weekSteps,
+                calories = weekCalories,
+                sleep = weekSleep,
+                runDistance = weekRunDistance,
+                gymHours = weekGymHours,
+                foodLog = weekFoodLog,
+                goal = weekGoal,
+                onStepsChange = { weekSteps = it },
+                onCaloriesChange = { weekCalories = it },
+                onSleepChange = { weekSleep = it },
+                onRunDistanceChange = { weekRunDistance = it },
+                onGymHoursChange = { weekGymHours = it },
+                onFoodLogChange = { weekFoodLog = it },
+                onGoalChange = { weekGoal = it }
+            )
+            2 -> TimeRangeContent(
+                steps = monthSteps,
+                calories = monthCalories,
+                sleep = monthSleep,
+                runDistance = monthRunDistance,
+                gymHours = monthGymHours,
+                foodLog = monthFoodLog,
+                goal = monthGoal,
+                onStepsChange = { monthSteps = it },
+                onCaloriesChange = { monthCalories = it },
+                onSleepChange = { monthSleep = it },
+                onRunDistanceChange = { monthRunDistance = it },
+                onGymHoursChange = { monthGymHours = it },
+                onFoodLogChange = { monthFoodLog = it },
+                onGoalChange = { monthGoal = it }
+            )
         }
     }
 }
 
 @Composable
-fun TimeRangeContent(timeRange: String) {
+fun TimeRangeContent(
+    steps: Int,
+    calories: Int,
+    sleep: Int,
+    runDistance: Int,
+    gymHours: Int,
+    foodLog: String,
+    goal: Int,
+    onStepsChange: (Int) -> Unit,
+    onCaloriesChange: (Int) -> Unit,
+    onSleepChange: (Int) -> Unit,
+    onRunDistanceChange: (Int) -> Unit,
+    onGymHoursChange: (Int) -> Unit,
+    onFoodLogChange: (String) -> Unit,
+    onGoalChange: (Int) -> Unit
+) {
     var showDialog by remember { mutableStateOf(false) }
     var dialogType by remember { mutableStateOf("") }
-    var goal by remember { mutableStateOf(20000) } // Default goal
-    var progress by remember { mutableStateOf(5000) } // Example progress value (can be dynamic)
-    var calories by remember { mutableStateOf(185) }
-    var sleep by remember { mutableStateOf(8) }
-    var runDistance by remember { mutableStateOf(5) }
-    var gymHours by remember { mutableStateOf(1) }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -75,29 +154,35 @@ fun TimeRangeContent(timeRange: String) {
             modifier = Modifier
                 .size(100.dp)
                 .align(Alignment.CenterHorizontally)
-                .clickable { showDialog = true; dialogType = "Goal" }, // Show dialog on click
+                .clickable {
+                    showDialog = true
+                    dialogType = "Goal"
+                },
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(
-                progress = progress / goal.toFloat(),
+                progress = steps / goal.toFloat(),
                 color = Color.Green,
                 strokeWidth = 8.dp,
                 modifier = Modifier.size(100.dp)
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(goal.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("${(progress / goal.toFloat() * 100).toInt()}%", fontSize = 14.sp, color = Color.Gray)
+                Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 14.sp, color = Color.Gray)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Step, Distance, Calories, Sleep Sections with Clickable Modifiers
+        // Step, Distance, Calories, Sleep Sections
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            InfoBox("Step", "$progress steps", Color(0xFFADD8E6))
+            InfoBox("Steps", "$steps steps", Color(0xFFADD8E6)) {
+                showDialog = true
+                dialogType = "Steps"
+            }
             InfoBox("Distance", "4.5 km", Color(0xFFADD8E6))
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -105,42 +190,38 @@ fun TimeRangeContent(timeRange: String) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5), onClick = {
+            InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5)) {
                 showDialog = true
                 dialogType = "Calories"
-            })
-            InfoBox("Sleep", "$sleep hours", Color(0xFFADD8E6), onClick = {
+            }
+            InfoBox("Sleep", "$sleep hours", Color(0xFFADD8E6)) {
                 showDialog = true
                 dialogType = "Sleep"
-            })
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Workouts Section with Clickable Items
+        // Workouts Section
         Text("Workouts", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        WorkoutItem("Run", "$runDistance km", onClick = {
+        WorkoutItem("Run", "$runDistance km") {
             showDialog = true
             dialogType = "Run"
-        })
-        WorkoutItem("Gym", "$gymHours hours", onClick = {
+        }
+        WorkoutItem("Gym", "$gymHours hours") {
             showDialog = true
             dialogType = "Gym"
-        })
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Food Section
         Text("Food", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFFE4B5), RoundedCornerShape(8.dp))
-                .padding(16.dp)
-        ) {
-            Text("Food log goes here", color = Color.DarkGray)
+        InfoBox("Food Log", foodLog, Color(0xFFFFE4B5)) {
+            showDialog = true
+            dialogType = "Food"
         }
     }
 
@@ -148,21 +229,25 @@ fun TimeRangeContent(timeRange: String) {
     if (showDialog) {
         SetValueDialog(
             currentValue = when (dialogType) {
+                "Steps" -> steps.toString()
                 "Calories" -> calories.toString()
                 "Sleep" -> sleep.toString()
                 "Run" -> runDistance.toString()
                 "Gym" -> gymHours.toString()
+                "Food" -> foodLog
                 else -> goal.toString()
             },
             label = dialogType,
             onDismiss = { showDialog = false },
             onConfirm = { newValue ->
                 when (dialogType) {
-                    "Calories" -> calories = newValue.toInt()
-                    "Sleep" -> sleep = newValue.toInt()
-                    "Run" -> runDistance = newValue.toInt()
-                    "Gym" -> gymHours = newValue.toInt()
-                    "Goal" -> goal = newValue.toInt()
+                    "Steps" -> onStepsChange(newValue.toInt())
+                    "Calories" -> onCaloriesChange(newValue.toInt())
+                    "Sleep" -> onSleepChange(newValue.toInt())
+                    "Run" -> onRunDistanceChange(newValue.toInt())
+                    "Gym" -> onGymHoursChange(newValue.toInt())
+                    "Food" -> onFoodLogChange(newValue)
+                    "Goal" -> onGoalChange(newValue.toInt())
                 }
                 showDialog = false
             }
@@ -189,9 +274,7 @@ fun SetValueDialog(currentValue: String, label: String, onDismiss: () -> Unit, o
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onConfirm(text)
-            }) {
+            Button(onClick = { onConfirm(text) }) {
                 Text("Set $label")
             }
         },
