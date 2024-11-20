@@ -49,53 +49,6 @@ class MainActivity : ComponentActivity() {
 
 
 
-@Composable
-fun MainScreen() {
-   val isDarkMode = remember { mutableStateOf(false) }
-    val navController = rememberNavController()
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) },
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "nav_todo",
-            Modifier.padding(innerPadding)
-        ) {
-            composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
-            composable("nav_calendar") { CalendarScreen(navController) } // Reference to the Calendar screen
-            composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
-            composable("nav_profile") { ProfileScreen(navController) } // Reference to the Profile screen
-            composable("nav_about_us") { AboutUsScreen(navController) }
-            composable("nav_add_item") { AddItemFragment(navController) }
-            composable("survey") { SurveyScreen(navController) }
-            composable("meditation") { MeditationScreen(navController)}
-        }
-
-            // Editing a todo
-            composable(
-                "edit_todo/{course}/{selectedTabIndex}/{backgroundColor}",
-                arguments = listOf(
-                    navArgument("course") { type = NavType.StringType },
-                    navArgument("selectedTabIndex") { type = NavType.IntType },
-                    navArgument("backgroundColor") { type = NavType.StringType }
-                )
-            ) { backStackEntry ->
-                val course = backStackEntry.arguments?.getString("course") ?: ""
-                val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
-                val backgroundColorInt = backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
-                val backgroundColor = Color(backgroundColorInt.toLong())
-
-
-                EditTodoScreen(
-                    itemName = course,
-                    navController,
-                    backgroundColor = backgroundColor,
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
