@@ -25,6 +25,7 @@ import com.cs407.wellnest.ui.theme.WellNestTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppDatabase.getDatabase(this)
         enableEdgeToEdge()
         setContent {
             WellNestTheme {
@@ -54,23 +55,22 @@ fun MainScreen() {
 
             // Editing a todo
             composable(
-                "edit_todo/{course}/{selectedTabIndex}/{backgroundColor}",
+                "edit_todo/{todoId}/{selectedTabIndex}/{backgroundColor}",
                 arguments = listOf(
-                    navArgument("course") { type = NavType.StringType },
+                    navArgument("todoId") { type = NavType.StringType },
                     navArgument("selectedTabIndex") { type = NavType.IntType },
-                    navArgument("backgroundColor") { type = NavType.StringType }
+                    navArgument("backgroundColor") { type = NavType.IntType }
                 )
             ) { backStackEntry ->
-                val course = backStackEntry.arguments?.getString("course") ?: ""
+                val todoId = backStackEntry.arguments?.getString("todoId")
                 val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
-                val backgroundColorInt = backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
-                val backgroundColor = Color(backgroundColorInt.toLong())
-
+                val backgroundColorInt = backStackEntry.arguments?.getInt("backgroundColor") ?: 0xFF5BBAE9.toInt()
+                val backgroundColor = Color(backgroundColorInt)
 
                 EditTodoScreen(
-                    itemName = course,
-                    navController,
-                    backgroundColor = backgroundColor,
+                    itemId = todoId,
+                    navController = navController,
+                    backgroundColor = backgroundColor
                 )
             }
         }

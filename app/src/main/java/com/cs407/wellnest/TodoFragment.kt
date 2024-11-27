@@ -18,10 +18,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun TodoScreen(navController: NavController) {
+fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
+    val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
+
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         floatingActionButton = {
@@ -59,14 +64,33 @@ fun TodoScreen(navController: NavController) {
                 selectedTabIndex = index // Update selected tab when clicked
             }
             Spacer(modifier = Modifier.height(12.dp))
-            TodoListSection(
-                selectedTabIndex = selectedTabIndex,
-                navController = navController,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
-                    .weight(1f)
-            )
+            LazyColumn(
+                modifier = Modifier.fillMaxHeight(),
+                contentPadding = PaddingValues(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+            ) {
+                item {
+                    Text("Today:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
+                }
+
+                items(todos.filter { !it.isCompleted }) { todo ->
+                    TodoListItem(
+                        todo = todo,
+                        onCheckChanged = { isCompleted ->
+                            scope.launch {
+                                viewModel.updateTodoCompletion(todo.id, isCompleted)
+                            }
+                        },
+                        onClick = {
+                            val backgroundColor = if (selectedTabIndex == 0) {
+                                Color(0xFF5BBAE9)
+                            } else {
+                                Color(0xFF48AB4C)
+                            }
+                            navController.navigate("edit_todo/${todo.id}/${selectedTabIndex}/${backgroundColor.toArgb()}")
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -140,88 +164,16 @@ fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun TodoListSection(selectedTabIndex: Int,
-                    navController: NavController,
-                    modifier: Modifier = Modifier) {
-    val backgroundColor = when (selectedTabIndex) {
-        0 -> Color(0xFF5BBAE9) // Light Blue for Academics
-        else -> Color(0xFF48AB4C) // Green for Health
-    }
-
-    val academicGoals = when (selectedTabIndex) {
-        0 -> listOf(
-            TodoItem("CS 407", "Complete Zybooks Chapter 6", false),
-            TodoItem("Folklore 100", "Read 'Our Lady's Maid...'", true),
-            TodoItem("Math 101", "Prepare for Midterm Exam", false),
-            TodoItem("Physics 201", "Submit Lab Report", false),
-        )
-        else -> listOf(
-            TodoItem("40 minutes of Treadmill", "", false),
-            TodoItem("10 reps of Battemont Frappes", "", true)
-        )
-    }
-
-    LazyColumn(
-        modifier = modifier.fillMaxHeight(), // Ensure it stretches vertically
-        contentPadding = PaddingValues(
-            bottom = WindowInsets.systemBars
-                .asPaddingValues()
-                .calculateBottomPadding()
-        )
-    ) {
-        item {
-            Text("Today:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
-        }
-        items(academicGoals) { todoItem ->
-            TodoListItem(
-                course = todoItem.course,
-                description = todoItem.description,
-                isCompleted = todoItem.isCompleted,
-                onClick = {
-                    // Navigate to the edit screen with the item ID (e.g., course name)
-                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
-                }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Tomorrow:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
-        }
-
-        items(listOf(TodoItem("Add a goal", "", false))) { todoItem ->
-            TodoListItem(
-                course = todoItem.course,
-                description = todoItem.description,
-                isCompleted = todoItem.isCompleted,
-                onClick = {
-                    // Navigate to the edit screen with a placeholder ID
-                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
-                }
-            )
-        }
-    }
-}
-
-
-data class TodoItem(
-    val course: String,
-    val description: String,
-    val isCompleted: Boolean
-)
-
-@Composable
-fun TodoListItem(course: String, description: String, isCompleted: Boolean, onClick: () -> Unit) {
-    var isChecked by remember { mutableStateOf(isCompleted) }
-
+fun TodoListItem(todo: TodoEntity,
+                 onCheckChanged: (Boolean) -> Unit,
+                 onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .clickable { onClick() }, // Trigger onClick when clicked
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -232,35 +184,34 @@ fun TodoListItem(course: String, description: String, isCompleted: Boolean, onCl
             Box(
                 modifier = Modifier
                     .size(24.dp)
-                    .background(Color.Blue, shape = CircleShape)
+                    .background(if (todo.category == 0) Color(0xFF5BBAE9) else Color(0xFF48AB4C),
+                        shape = CircleShape)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    course,
+                    todo.title,
                     fontSize = 16.sp,
                     color = Color.DarkGray,
-                    textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+                    textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-                if (description.isNotEmpty()) {
+                if (todo.description.isNotEmpty()) {
                     Text(
-                        description,
+                        todo.description,
                         fontSize = 14.sp,
                         color = Color.Gray,
-                        textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+                        textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                     )
                 }
             }
 
-            IconButton(onClick = {
-                isChecked = !isChecked
-            }) {
+            IconButton(onClick = { onCheckChanged(!todo.isCompleted) }) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_check_circle),
-                    contentDescription = if (isChecked) "Task Completed" else "Complete Task",
-                    tint = if (isChecked) Color.Green else Color.Blue
+                    contentDescription = if (todo.isCompleted) "Task Completed" else "Complete Task",
+                    tint = if (todo.isCompleted) Color.Green else Color.Blue
                 )
             }
         }
