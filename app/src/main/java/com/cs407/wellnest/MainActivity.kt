@@ -70,7 +70,6 @@ fun MainScreen() {
             composable("nav_profile") {ProfileScreen(navController)  } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController) }
             composable("survey") { SurveyScreen(navController) }
-        }
 
             // Editing a todo
             composable(

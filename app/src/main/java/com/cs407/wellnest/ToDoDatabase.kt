@@ -18,8 +18,14 @@ data class TodoEntity(
 
 @Dao
 interface TodoDao {
+    @Query("SELECT * FROM todos WHERE id = :todoId LIMIT 1")
+    fun getTodoByIdFlow(todoId: String): Flow<TodoEntity?>
+
     @Query("SELECT * FROM todos WHERE category = :category ORDER BY dueDate ASC")
     fun getTodosByCategory(category: Int): Flow<List<TodoEntity>>
+
+    @Query("SELECT * FROM todos WHERE id = :todoId")
+    suspend fun getTodoById(todoId: String): TodoEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTodo(todo: TodoEntity)

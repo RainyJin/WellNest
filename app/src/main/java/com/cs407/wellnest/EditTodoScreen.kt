@@ -24,6 +24,7 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun EditTodoScreen(itemId: String?,
@@ -50,13 +51,27 @@ fun EditTodoScreen(itemId: String?,
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
+    val todoItem by remember(itemId) {
+        if (itemId != null && itemId != "new") {
+            viewModel.getTodoByIdFlow(itemId)
+        } else {
+            MutableStateFlow(null)
+        }
+    }.collectAsState(initial = null)
+
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(itemId) {
-        // If editing existing todo, load its data
+    LaunchedEffect(todoItem) {
+        println("LaunchedEffect triggered with itemId: $itemId")
         if (itemId != null && itemId != "new") {
-            // Load existing todo data here
-
+            val existingTodo = viewModel.getTodoById(itemId)
+            println("Existing todo retrieved: $existingTodo")
+            existingTodo?.let { todo ->
+                goalText = TextFieldValue(todo.title)
+                descriptionText = TextFieldValue(todo.description)
+                selectedDate = todo.dueDate
+                selectedRepeatOption = todo.repeatOption
+            }
         }
     }
 
@@ -208,7 +223,7 @@ fun EditTodoScreen(itemId: String?,
                     onClick = {
                         scope.launch {
                             val todo = TodoEntity(
-                                id = itemId ?: UUID.randomUUID().toString(),
+                                id = if (itemId != null && itemId != "new") itemId else UUID.randomUUID().toString(),
                                 title = goalText.text,
                                 description = descriptionText.text,
                                 dueDate = selectedDate,

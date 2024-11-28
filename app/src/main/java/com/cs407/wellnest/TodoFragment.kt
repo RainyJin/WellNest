@@ -54,12 +54,12 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection()
+            TopSection(onMeditationClick = { navController.navigate("meditation") })
             Spacer(modifier = Modifier.height(32.dp))
             PlaceholderImage(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            Spacer(modifier = Modifier.height(52.dp))
+            Spacer(modifier = Modifier.height(72.dp))
             CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
                 selectedTabIndex = index // Update selected tab when clicked
             }
@@ -160,27 +160,48 @@ fun MeditationScreen(onBack: () -> Unit) {
 fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
     val categories = listOf("Academics", "Health")
 
-    // SingleChoiceSegmentedButtonRow for selecting categories
     SingleChoiceSegmentedButtonRow(
         modifier = Modifier
-            .fillMaxWidth() // Make the row fill the available width
-            .padding(horizontal = 4.dp) // Add padding to the sides for better spacing
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
             .wrapContentWidth(Alignment.CenterHorizontally)
-    ){
+    ) {
         categories.forEachIndexed { index, option ->
+            val colors = SegmentedButtonColors(
+                activeContainerColor = when (option) {
+                    "Academics" -> Color(0xFF5BBAE9)
+                    "Health" -> Color(0xFF48AB4C)
+                    else -> Color.Gray
+                },
+                activeContentColor = Color.White,
+                activeBorderColor = Color.Transparent,
+                inactiveContainerColor = Color.Transparent,
+                inactiveContentColor = Color.Gray,
+                inactiveBorderColor = Color.DarkGray,
+                disabledActiveContainerColor = Color.LightGray,
+                disabledActiveContentColor = Color.DarkGray,
+                disabledActiveBorderColor = Color.Transparent,
+                disabledInactiveContainerColor = Color.Transparent,
+                disabledInactiveContentColor = Color.LightGray,
+                disabledInactiveBorderColor = Color.Transparent
+            )
+
             SegmentedButton(
-                modifier = Modifier
-                    .weight(1f),
-                shape = SegmentedButtonDefaults. itemShape(index = index, count = categories. size),
+                modifier = Modifier.weight(1f),
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = categories.size),
                 selected = selectedTabIndex == index,
-                onClick = { onTabSelected(index)
-                }
+                onClick = { onTabSelected(index) },
+                colors = colors
             ) {
-                Text(text = option, modifier = Modifier.padding(4.dp))
+                Text(
+                    text = option,
+                    modifier = Modifier.padding(4.dp)
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun TodoListItem(todo: TodoEntity,
@@ -192,7 +213,8 @@ fun TodoListItem(todo: TodoEntity,
             .fillMaxWidth()
             .padding(vertical = 3.dp)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -202,7 +224,7 @@ fun TodoListItem(todo: TodoEntity,
         ) {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(30.dp)
                     .background(if (todo.category == 0) Color(0xFF5BBAE9) else Color(0xFF48AB4C),
                         shape = CircleShape)
             )
@@ -212,25 +234,28 @@ fun TodoListItem(todo: TodoEntity,
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     todo.title,
-                    fontSize = 16.sp,
+                    fontSize = 22.sp,
                     color = Color.DarkGray,
                     textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
                 if (todo.description.isNotEmpty()) {
                     Text(
                         todo.description,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.Gray,
                         textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                     )
                 }
             }
 
-            IconButton(onClick = { onCheckChanged(!todo.isCompleted) }) {
+            IconButton(
+                onClick = { onCheckChanged(!todo.isCompleted) }
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_check_circle),
                     contentDescription = if (todo.isCompleted) "Task Completed" else "Complete Task",
-                    tint = if (todo.isCompleted) Color.Green else Color.Blue
+                    tint = if (todo.isCompleted) Color(0xFF48AB4C) else Color(0xFF5BBAE9),
+                    modifier = Modifier.size(42.dp)
                 )
             }
         }
