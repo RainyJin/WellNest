@@ -1,5 +1,10 @@
 package com.cs407.wellnest
 
+import android.content.Context
+import android.opengl.GLSurfaceView
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,13 +18,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.filament.Camera
+import com.google.android.filament.Engine
+import com.google.android.filament.EntityManager
+import com.google.android.filament.Renderer
+import com.google.android.filament.Scene
+import com.google.android.filament.View
+import com.google.android.filament.Viewport
+import com.google.android.filament.gltfio.AssetLoader
+import com.google.android.filament.gltfio.MaterialProvider
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import io.github.sceneview.Scene
+import io.github.sceneview.animation.Transition.animateRotation
+import io.github.sceneview.math.Position
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberCollisionSystem
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberMainLightNode
+import io.github.sceneview.rememberMaterialLoader
+import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberNode
+import io.github.sceneview.rememberNodes
+import io.github.sceneview.rememberRenderer
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
 import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
+import java.nio.ByteBuffer
 
 @Composable
 fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
@@ -27,6 +65,40 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
     val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val engine = rememberEngine()
+    val modelLoader = rememberModelLoader(engine)
+    val environmentLoader = rememberEnvironmentLoader(engine)
+
+    // Set up camera and rotation for the 3D view
+    val cameraNode = rememberCameraNode(engine).apply {
+        position = Position(x = 0.0f, y = 0.6f, z = 2.4f)
+    }
+    val centerNode = rememberNode(engine).apply {
+        position = Position(x = 0.0f, y = 0.8f, z = 0.0f) // Example position for the target
+    }.addChildNode(cameraNode)
+    val cameraTransition = rememberInfiniteTransition(label = "CameraTransition")
+    val cameraRotation by cameraTransition.animateRotation(
+        initialValue = Rotation(y = 0.0f),
+        targetValue = Rotation(y = 360.0f),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 20000)
+        )
+    )
+
+    // Read the GLB model file from assets
+    val assetManager = context.assets
+    val inputStream = assetManager.open("northern_cardinal_stillAnim.glb")
+    val buffer = inputStream.readBytes()
+    inputStream.close()
+    val byteBuffer = ByteBuffer.wrap(buffer)
+
+    // Create ModelNode from model instance
+    val modelInstance = modelLoader.createModelInstance(byteBuffer)
+    val modelNode = ModelNode(modelInstance = modelInstance, scaleToUnits = 1.6f)
+
+    val environmentAssetLocation = "autumn_field_puresky.hdr"
+    val environment = environmentLoader.createHDREnvironment(assetFileLocation = environmentAssetLocation)
 
     Scaffold(
         floatingActionButton = {
@@ -55,11 +127,28 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
             TopSection(onMeditationClick = { navController.navigate("meditation") })
-            Spacer(modifier = Modifier.height(32.dp))
-            PlaceholderImage(
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(72.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp) // Control the height of the 3D scene
+            ) {
+                if (environment != null) {
+                    Scene(
+                        modifier = Modifier.fillMaxSize(),
+                        engine = engine,
+                        modelLoader = modelLoader,
+                        cameraNode = cameraNode,
+                        childNodes = listOf(centerNode, modelNode),
+                        environment = environment,
+                        onFrame = {
+                            centerNode.rotation = cameraRotation
+                            cameraNode.lookAt(centerNode)
+                        },
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(42.dp))
             CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
                 selectedTabIndex = index // Update selected tab when clicked
             }
@@ -261,6 +350,9 @@ fun TodoListItem(todo: TodoEntity,
         }
     }
 }
+
+
+
 
 
 

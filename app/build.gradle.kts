@@ -94,9 +94,5 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
     implementation ("androidx.navigation:navigation-compose:2.7.0")
     implementation ("androidx.media3:media3-exoplayer:1.0.0")
-
-
-
-
-
+    implementation("io.github.sceneview:sceneview:2.2.1")
 }
