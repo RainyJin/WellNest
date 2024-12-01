@@ -37,6 +37,7 @@ import com.google.android.filament.gltfio.AssetLoader
 import com.google.android.filament.gltfio.MaterialProvider
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import io.github.sceneview.Scene
+import io.github.sceneview.animation.ModelAnimator
 import io.github.sceneview.animation.Transition.animateRotation
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
@@ -77,14 +78,14 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
     val centerNode = rememberNode(engine).apply {
         position = Position(x = 0.0f, y = 0.8f, z = 0.0f) // Example position for the target
     }.addChildNode(cameraNode)
-    val cameraTransition = rememberInfiniteTransition(label = "CameraTransition")
-    val cameraRotation by cameraTransition.animateRotation(
-        initialValue = Rotation(y = 0.0f),
-        targetValue = Rotation(y = 360.0f),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 20000)
-        )
-    )
+//    val cameraTransition = rememberInfiniteTransition(label = "CameraTransition")
+//    val cameraRotation by cameraTransition.animateRotation(
+//        initialValue = Rotation(y = 0.0f),
+//        targetValue = Rotation(y = 360.0f),
+//        animationSpec = infiniteRepeatable(
+//            animation = tween(durationMillis = 20000)
+//        )
+//    )
 
     // Read the GLB model file from assets
     val assetManager = context.assets
@@ -95,7 +96,34 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
 
     // Create ModelNode from model instance
     val modelInstance = modelLoader.createModelInstance(byteBuffer)
-    val modelNode = ModelNode(modelInstance = modelInstance, scaleToUnits = 1.6f)
+    val modelNode = ModelNode(modelInstance = modelInstance, scaleToUnits = 1.6f).apply {
+        // Start the first two animations on a loop
+        repeat(2) { index ->
+            playAnimation(
+                animationIndex = index,
+            )
+        }
+
+        // Add onTouch handling for the third animation
+        onTouch = { hitResult, motionEvent ->
+            // Check if third animation exists
+            if (modelInstance.animator.animationCount > 2) {
+                // Check if third animation is already playing
+                val thirdAnimationPlaying = playingAnimations.any { it.key == 2 }
+
+                if (thirdAnimationPlaying) {
+                    // If playing, stop the third animation
+                    stopAnimation(animationIndex = 2)
+                } else {
+                    // If not playing, start the third animation
+                    playAnimation(
+                        animationIndex = 2,
+                    )
+                }
+            }
+            false // Return false to allow further touch event handling
+        }
+    }
 
     val environmentAssetLocation = "autumn_field_puresky.hdr"
     val environment = environmentLoader.createHDREnvironment(assetFileLocation = environmentAssetLocation)
@@ -132,6 +160,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp) // Control the height of the 3D scene
+                    .background(Color.White)
             ) {
                 if (environment != null) {
                     Scene(
@@ -140,11 +169,11 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                         modelLoader = modelLoader,
                         cameraNode = cameraNode,
                         childNodes = listOf(centerNode, modelNode),
-                        environment = environment,
                         onFrame = {
-                            centerNode.rotation = cameraRotation
+//                            centerNode.rotation = cameraRotation
                             cameraNode.lookAt(centerNode)
                         },
+                        environment = environment
                     )
                 }
             }
