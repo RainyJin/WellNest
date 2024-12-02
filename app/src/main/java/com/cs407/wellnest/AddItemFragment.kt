@@ -36,7 +36,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
     val eventIdArg = backStackEntry?.arguments?.getString("eventId") ?: UUID.randomUUID().toString()
     val eventDescArg = backStackEntry?.arguments?.getString("eventDesc") ?: ""
     val eventDateArg = backStackEntry?.arguments?.getString("eventDate") ?:
-        LocalDate.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+        LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"))
     val eventRepeatArg = backStackEntry?.arguments?.getString("eventRepeat") ?: "Does not repeat"
 
     // input field, date picker, and repeat option default texts
@@ -144,7 +144,10 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                     onClick = {
                         val countdown = CountdownEntity(
                             id = eventIdArg,
-                            targetDate = eventDate,
+                            targetDate = LocalDate.parse(
+                                eventDate,
+                                DateTimeFormatter.ofPattern("M/d/yyyy")
+                            ).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")),
                             description = eventDesc,
                             repeatOption = eventRepeat
                         )

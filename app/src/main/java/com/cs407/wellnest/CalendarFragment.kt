@@ -41,6 +41,7 @@ import java.util.UUID
 fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     LaunchedEffect(Unit) {
+        viewModel.deleteExpiredCountdown()
         countdownItems.addAll(viewModel.getCountdownItems())
     }
 
@@ -50,7 +51,7 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
     // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
     val calendarDays = countdownItems.map { item ->
         Log.d("target Date:", "${item.targetDate}")
         val parsedDate = LocalDate.parse(item.targetDate, formatter)
