@@ -36,13 +36,13 @@ fun StartScreen(navController: NavController) {
                         .build()
                 ),
                 contentDescription = "Well Nest Logo",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(300.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Well Nest",
+                text = "WellNest",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
