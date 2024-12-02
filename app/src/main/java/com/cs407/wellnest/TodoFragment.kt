@@ -59,11 +59,17 @@ import io.github.sceneview.rememberView
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
     val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
+
+    val nextTenDays = generateNextTenDays()
+    val groupedTodos = expandRecurringTodos(todos, nextTenDays)
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -186,28 +192,46 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                 modifier = Modifier.fillMaxHeight(),
                 contentPadding = PaddingValues(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
             ) {
-                item {
-                    Text("Today:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
+                nextTenDays.forEach { date ->
+                    val todosForDate = groupedTodos[date] ?: emptyList()
+
+                    if (todosForDate.isNotEmpty()) {
+                        // Header for the date
+                        item {
+                            val dateText = when {
+                                date == LocalDate.now() -> "Today, ${date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+                                date == LocalDate.now().plusDays(1) -> "Tomorrow, ${date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+                                else -> date.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+                            }
+                            Text(
+                                text = dateText,
+                                fontSize = 20.sp,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        // Todos for this date
+                        items(todosForDate.filter { !it.isCompleted }) { todo ->
+                            TodoListItem(
+                                todo = todo,
+                                onCheckChanged = { isCompleted ->
+                                    scope.launch {
+                                        viewModel.updateTodoCompletion(todo.id, isCompleted)
+                                    }
+                                },
+                                onClick = {
+                                    val backgroundColor = if (selectedTabIndex == 0) {
+                                        Color(0xFF5BBAE9)
+                                    } else {
+                                        Color(0xFF48AB4C)
+                                    }
+                                    navController.navigate("edit_todo/${todo.id}/$selectedTabIndex/${backgroundColor.toArgb()}")
+                                }
+                            )
+                        }
+                    }
                 }
 
-                items(todos.filter { !it.isCompleted }) { todo ->
-                    TodoListItem(
-                        todo = todo,
-                        onCheckChanged = { isCompleted ->
-                            scope.launch {
-                                viewModel.updateTodoCompletion(todo.id, isCompleted)
-                            }
-                        },
-                        onClick = {
-                            val backgroundColor = if (selectedTabIndex == 0) {
-                                Color(0xFF5BBAE9)
-                            } else {
-                                Color(0xFF48AB4C)
-                            }
-                            navController.navigate("edit_todo/${todo.id}/${selectedTabIndex}/${backgroundColor.toArgb()}")
-                        }
-                    )
-                }
             }
         }
     }
@@ -343,8 +367,7 @@ fun TodoListItem(todo: TodoEntity,
             Box(
                 modifier = Modifier
                     .size(30.dp)
-                    .background(if (todo.category == 0) Color(0xFF5BBAE9) else Color(0xFF48AB4C),
-                        shape = CircleShape)
+                    .background(Color(todo.color), shape = CircleShape)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -380,6 +403,57 @@ fun TodoListItem(todo: TodoEntity,
     }
 }
 
+fun generateNextTenDays(): List<LocalDate> {
+    val today = LocalDate.now()
+    return (0..9).map { today.plusDays(it.toLong()) }
+}
+
+fun expandRecurringTodos(todos: List<TodoEntity>, datesRange: List<LocalDate>): Map<LocalDate, List<TodoEntity>> {
+    val expandedTodos = mutableMapOf<LocalDate, MutableList<TodoEntity>>()
+
+    // First, add the original todos to their respective dates
+    datesRange.forEach { date ->
+        expandedTodos[date] = mutableListOf()
+    }
+
+    todos.forEach { todo ->
+        val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+        val originalDate = LocalDate.parse(todo.dueDate, dateFormatter)
+
+        when (todo.repeatOption) {
+            "Daily" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            "Weekly" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate && ChronoUnit.WEEKS.between(originalDate, date) % 1 == 0L) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            "Monthly" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate && date.monthValue != originalDate.monthValue &&
+                        date.dayOfMonth == originalDate.dayOfMonth) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            else -> {
+                // Non-recurring todos
+                if (originalDate in datesRange) {
+                    expandedTodos[originalDate]?.add(todo)
+                }
+            }
+        }
+    }
+
+    return expandedTodos
+}
 
 
 

@@ -1,5 +1,7 @@
 package com.cs407.wellnest
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.room.*
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +15,8 @@ data class TodoEntity(
     val dueDate: String,
     val category: Int, // 0 for Academics, 1 for Health
     val repeatOption: String,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val color: Int = Color(0xFF5BBAE9).toArgb()
 )
 
 @Dao
@@ -40,7 +43,7 @@ interface TodoDao {
     suspend fun updateTodoCompletion(todoId: String, isCompleted: Boolean)
 }
 
-@Database(entities = [TodoEntity::class], version = 1)
+@Database(entities = [TodoEntity::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao
 
@@ -54,7 +57,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }
