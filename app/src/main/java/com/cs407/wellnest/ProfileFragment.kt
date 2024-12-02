@@ -60,8 +60,17 @@ fun ProfileScreen(navController: NavController) {
         SettingsSection(
             isDarkMode,
             onAboutUsClick = { navController.navigate("nav_about_us") },
-            onFeedbackClick = { navController.navigate("survey") }
+            onFeedbackClick = { navController.navigate("survey") },
+            onHelpClick = {navController.navigate("help")}
         )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HelpAndPoliciesSection(
+            isDarkMode = isDarkMode.value,
+            onFeedbackClick = { navController.navigate("survey") },
+            onHelpClick = { navController.navigate("help") }
+        )
+
     }
 }
 
@@ -138,7 +147,7 @@ fun ProfileSection(contentColor: Color) {
 
 
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit) {
+fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -188,7 +197,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick)
+        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick, onHelpClick )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -320,7 +329,7 @@ fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
 }
 
 @Composable
-fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
+fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
@@ -330,10 +339,15 @@ fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
 
     )
 
+
     Column {
         options.zip(icons).forEach { (option, icon) ->
             HelpPolicyItem(option, icon, textColor) {
-                if (option == "Feedback") onFeedbackClick()
+                when (option) {
+                    "Help" -> onHelpClick() // Navigate to HelpScreen
+                    "Feedback" -> onFeedbackClick()
+                    // Add other cases if needed
+                }
             }
         }
     }
