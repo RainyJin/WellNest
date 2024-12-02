@@ -71,7 +71,7 @@ fun AboutUsContent(modifier: Modifier = Modifier, navController: NavController) 
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
-            text = "- Rainy\n- Charlotte\n- Jordan\n- Zikun",
+            text = "- Rainy Jin\n- Charlotte Wan\n- Jordan Zhou\n- Zikun Zhou",
             fontSize = 16.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
