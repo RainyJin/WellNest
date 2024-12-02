@@ -1,7 +1,6 @@
 package com.cs407.wellnest
 
 import android.net.Uri
-import android.util.Log
 import android.view.LayoutInflater
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -15,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +35,6 @@ import java.util.Calendar
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 @Composable
 fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
@@ -53,7 +52,6 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     // Get a list of CalendarDays from the countdown items
     val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
     val calendarDays = countdownItems.map { item ->
-        Log.d("target Date:", "${item.targetDate}")
         val parsedDate = LocalDate.parse(item.targetDate, formatter)
         val calendar = Calendar.getInstance().apply {
             set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
@@ -144,6 +142,33 @@ fun CountdownCard(id: String,
                   repeat: String,
                   navController: NavController,
                   onDelete: () -> Unit) {
+    val showDialog = remember { mutableStateOf(false) }
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDialog.value = false },
+            title = { Text(text = "Confirm Deletion") },
+            text = { Text(text = "Do you really want to delete this item?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete()  // Call onDelete if user confirms
+                        showDialog.value = false  // Close the dialog
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDialog.value = false }  // Just close the dialog if dismissed
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -151,7 +176,7 @@ fun CountdownCard(id: String,
             .padding(vertical = 4.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onLongPress = { onDelete() }
+                    onLongPress = { showDialog.value = true }
                 )
             },
         elevation = CardDefaults.cardElevation(2.dp),
