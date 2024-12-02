@@ -61,14 +61,16 @@ fun ProfileScreen(navController: NavController) {
             isDarkMode,
             onAboutUsClick = { navController.navigate("nav_about_us") },
             onFeedbackClick = { navController.navigate("survey") },
-            onHelpClick = {navController.navigate("help")}
+            onHelpClick = {navController.navigate("help")} ,
+            onPrivacyClick = {navController.navigate("privacy")}
         )
         Spacer(modifier = Modifier.height(24.dp))
 
         HelpAndPoliciesSection(
             isDarkMode = isDarkMode.value,
             onFeedbackClick = { navController.navigate("survey") },
-            onHelpClick = { navController.navigate("help") }
+            onHelpClick = { navController.navigate("help") },
+            onPrivacyClick = {navController.navigate("privacy")}
         )
 
     }
@@ -147,7 +149,7 @@ fun ProfileSection(contentColor: Color) {
 
 
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit) {
+fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick:() -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -197,7 +199,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick, onHelpClick )
+        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick, onHelpClick, onPrivacyClick )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -329,7 +331,7 @@ fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
 }
 
 @Composable
-fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit) {
+fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick: () -> Unit) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
@@ -346,6 +348,7 @@ fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onH
                 when (option) {
                     "Help" -> onHelpClick() // Navigate to HelpScreen
                     "Feedback" -> onFeedbackClick()
+                    "Privacy Notice" -> onPrivacyClick()
                     // Add other cases if needed
                 }
             }

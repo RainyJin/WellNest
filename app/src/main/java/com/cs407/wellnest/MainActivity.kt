@@ -101,6 +101,8 @@ fun MainScreen() {
             composable("meditation") { MeditationScreen(navController)}
             composable("nav_add_item/{eventName}/{eventDate}") { AddItemFragment(navController) }
             composable("help") { HelpScreen(navController) }
+            composable("privacy") { PrivacyScreen(navController) }
+
 
             // Editing a todo
             composable(
