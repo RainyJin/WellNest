@@ -22,12 +22,8 @@ class CountdownViewModel(application: Application) : AndroidViewModel(applicatio
         return countdownDao.getCountdownItems()
     }
 
-    suspend fun insertCountdown(countdown: CountdownEntity) {
-        return countdownDao.insertCountdown(countdown)
-    }
-
-    suspend fun updateCountdown(countdown: CountdownEntity) {
-        return countdownDao.updateCountdown(countdown)
+    suspend fun upsertCountdown(countdown: CountdownEntity) {
+        return countdownDao.upsertCountdown(countdown)
     }
 
     suspend fun deleteCountdown(countdown: CountdownEntity) {

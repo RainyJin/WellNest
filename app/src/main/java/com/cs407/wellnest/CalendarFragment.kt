@@ -28,7 +28,6 @@ import com.applandeo.materialcalendarview.CalendarView
 import com.cs407.wellnest.ui.theme.Red40
 import com.cs407.wellnest.ui.theme.Salmon
 import com.cs407.wellnest.data.CountdownEntity
-//import com.cs407.wellnest.data.CountdownItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -36,6 +35,7 @@ import java.util.Calendar
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
@@ -76,7 +76,6 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                 val calendarView = view.findViewById<CalendarView>(R.id.calendarView)
                 calendarView.setHeaderColor(R.color.salmon)
                 calendarView.setCalendarDays(calendarDays)
-                // calendarView.setSelectionBackground(R.color.purple_200)
 
                 view
             },
@@ -157,8 +156,8 @@ fun CountdownCard(id: String,
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate("nav_add_item/${Uri.encode(description)}/" +
-                    "${Uri.encode(date)}/${Uri.encode(repeat)}") }
+            navController.navigate("nav_add_item/${Uri.encode(id)}/" +
+                    "${Uri.encode(description)}/${Uri.encode(date)}/${Uri.encode(repeat)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

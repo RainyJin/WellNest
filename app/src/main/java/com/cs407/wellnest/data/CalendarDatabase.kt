@@ -18,11 +18,8 @@ interface CountdownDao {
     @Query("SELECT * FROM countdowns ORDER BY targetDate ASC")
     suspend fun getCountdownItems(): List<CountdownEntity>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCountdown(countdown: CountdownEntity)
-
-    @Update
-    suspend fun updateCountdown(countdown: CountdownEntity)
+    @Upsert
+    suspend fun upsertCountdown(countdown: CountdownEntity)
 
     @Delete
     suspend fun deleteCountdown(countdown: CountdownEntity)

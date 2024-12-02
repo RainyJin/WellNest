@@ -33,7 +33,7 @@ import java.util.UUID
 @Composable
 fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
     val backStackEntry = navController.currentBackStackEntry
-    val eventIdArg = backStackEntry?.arguments?.getString("eventId") ?: ""
+    val eventIdArg = backStackEntry?.arguments?.getString("eventId") ?: UUID.randomUUID().toString()
     val eventDescArg = backStackEntry?.arguments?.getString("eventDesc") ?: ""
     val eventDateArg = backStackEntry?.arguments?.getString("eventDate") ?:
         LocalDate.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
@@ -143,22 +143,15 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                 Button(
                     onClick = {
                         val countdown = CountdownEntity(
-                            id = if (eventIdArg.isEmpty()) eventIdArg
-                                 else UUID.randomUUID().toString(),
+                            id = eventIdArg,
                             targetDate = eventDate,
                             description = eventDesc,
                             repeatOption = eventRepeat
                         )
 
                         viewModel.apply {
-                            if (eventIdArg.isEmpty()) {
-                                viewModelScope.launch {
-                                    insertCountdown(countdown)
-                                }
-                            } else {
-                                viewModelScope.launch {
-                                    updateCountdown(countdown)
-                                }
+                            viewModelScope.launch {
+                                upsertCountdown(countdown)
                             }
                         }
                         navController.popBackStack()
