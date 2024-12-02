@@ -49,7 +49,10 @@ fun TodoScreen(navController: NavController) {
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection(onMeditationClick = { navController.navigate("meditation") })
+            TopSection(
+                onMeditationClick = { navController.navigate("meditation") },
+                onPetClick = { navController.navigate("pet_profile")}
+            )
             Spacer(modifier = Modifier.height(32.dp))
             PlaceholderImage(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -73,17 +76,17 @@ fun TodoScreen(navController: NavController) {
 }
 
 @Composable
-fun TopSection(onMeditationClick: () -> Unit) {
+fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(
-            onClick = { /* Another action */ },
+            onClick = onPetClick,
             modifier = Modifier.size(48.dp)
-        ) {
+            ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_todo),
+                painter = painterResource(id = R.drawable.ic_pet),
                 contentDescription = "First Button",
                 modifier = Modifier.size(32.dp)
             )

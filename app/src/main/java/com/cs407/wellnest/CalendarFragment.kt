@@ -1,5 +1,7 @@
 package com.cs407.wellnest
 
+import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -11,12 +13,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
@@ -24,20 +27,40 @@ import com.applandeo.materialcalendarview.CalendarDay
 import com.applandeo.materialcalendarview.CalendarView
 import com.cs407.wellnest.ui.theme.Red40
 import com.cs407.wellnest.ui.theme.Salmon
-import com.cs407.wellnest.data.CountdownItem
+import com.cs407.wellnest.data.CountdownEntity
+//import com.cs407.wellnest.data.CountdownItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 @Composable
-fun CalendarScreen(navController: NavController) {
-    val context = LocalContext.current
+fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+    val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
+    LaunchedEffect(Unit) {
+        countdownItems.addAll(viewModel.getCountdownItems())
+    }
 
 
     // Get today's date
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
+
+    // Get a list of CalendarDays from the countdown items
+    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+    val calendarDays = countdownItems.map { item ->
+        Log.d("target Date:", "${item.targetDate}")
+        val parsedDate = LocalDate.parse(item.targetDate, formatter)
+        val calendar = Calendar.getInstance().apply {
+            set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+        }
+        CalendarDay(calendar).apply {
+            backgroundResource = R.drawable.ic_target_date
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -52,7 +75,7 @@ fun CalendarScreen(navController: NavController) {
 
                 val calendarView = view.findViewById<CalendarView>(R.id.calendarView)
                 calendarView.setHeaderColor(R.color.salmon)
-                calendarView.setCalendarDays(list)
+                calendarView.setCalendarDays(calendarDays)
                 // calendarView.setSelectionBackground(R.color.purple_200)
 
                 view
@@ -94,38 +117,31 @@ fun CalendarScreen(navController: NavController) {
                 .padding(start = 16.dp, end = 16.dp)
         ) {
             items(countdownItems) { item ->
-                CountdownCard(daysLeft = ChronoUnit.DAYS.between(today, item.targetDate),
+                CountdownCard(
+                    id = item.id,
+                    date = item.targetDate,
+                    daysLeft = ChronoUnit.DAYS.between(today, LocalDate.parse(item.targetDate, formatter)),
                     description = item.description,
-                    cardColor = Color.White,
+                    repeat = item.repeatOption,
                     navController = navController,
-                    onDelete = { countdownItems.remove(item) }
+                    onDelete = {
+                        viewModel.viewModelScope.launch {
+                            viewModel.deleteCountdown(item)
+                            countdownItems.remove(item)
+                        }
+                    }
                 )
             }
         }
     }
-
-}
-
-val countdownItems = mutableListOf(
-    CountdownItem(LocalDate.of(2024, 12, 1), "CS 407 Midterm 📅"),
-    CountdownItem(LocalDate.of(2024, 12, 12), "CS 407 Final 📅"),
-    CountdownItem(LocalDate.of(2025, 2, 9), "First Anniversary 💖"),
-    CountdownItem(LocalDate.of(2025, 5, 12), "Summer Break 🎉")
-)
-
-val list = countdownItems.map { item ->
-    val calendar = Calendar.getInstance().apply {
-        set(item.targetDate.year, item.targetDate.monthValue - 1, item.targetDate.dayOfMonth)
-    }
-    CalendarDay(calendar).apply {
-        backgroundResource = R.drawable.ic_target_date
-    }
 }
 
 @Composable
-fun CountdownCard(daysLeft: Long,
+fun CountdownCard(id: String,
+                  date: String,
+                  daysLeft: Long,
                   description: String,
-                  cardColor: Color,
+                  repeat: String,
                   navController: NavController,
                   onDelete: () -> Unit) {
     Card(
@@ -139,8 +155,10 @@ fun CountdownCard(daysLeft: Long,
                 )
             },
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        onClick = { navController.navigate("nav_add_item/$description/${LocalDate.now().plusDays(daysLeft)}") }
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        onClick = {
+            navController.navigate("nav_add_item/${Uri.encode(description)}/" +
+                    "${Uri.encode(date)}/${Uri.encode(repeat)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
