@@ -1,5 +1,12 @@
 package com.cs407.wellnest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -25,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.core.app.NotificationCompat
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import java.util.Calendar
@@ -129,7 +137,6 @@ fun ProfileSection(contentColor: Color) {
 
 
 
-
 @Composable
 fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
@@ -203,17 +210,36 @@ fun ReminderPreference(
     isDarkMode: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val textColor = if (isDarkMode) Color.White else Color.Black
     val timeState = remember { mutableStateOf("No time set") }
     val isReminderOn = remember { mutableStateOf(false) }
     val calendar = Calendar.getInstance()
+    val notificationHelper = remember { NotificationHelper(context) }
 
     // Time picker dialog
     val timePickerDialog = TimePickerDialog(
-        LocalContext.current,
+        context,
         { _, hourOfDay, minute ->
             val timeString = String.format("%02d:%02d", hourOfDay, minute)
             timeState.value = timeString
+
+            // Schedule notification
+            val notificationCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hourOfDay)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+
+                // If the time has already passed today, schedule for tomorrow
+                if (timeInMillis < System.currentTimeMillis()) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
+            }
+
+            notificationHelper.scheduleNotification(
+                title,
+                notificationCalendar.timeInMillis
+            )
         },
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
@@ -230,7 +256,6 @@ fun ReminderPreference(
         ) {
             Text(text = title, color = textColor)
 
-            // Switch for enabling/disabling the reminder
             Switch(
                 checked = isReminderOn.value,
                 onCheckedChange = { isChecked ->
@@ -239,12 +264,12 @@ fun ReminderPreference(
                         timePickerDialog.show()
                     } else {
                         timeState.value = "No time set"
+                        // Cancel any existing notifications here if needed
                     }
                 }
             )
         }
 
-        // Display the selected time or default message
         if (isReminderOn.value) {
             Text(
                 text = "Reminder set for: ${timeState.value}",
@@ -255,6 +280,8 @@ fun ReminderPreference(
         }
     }
 }
+
+
 
 @Composable
 fun NotificationPreferenceItem(title: String, isDarkMode: Boolean) {
