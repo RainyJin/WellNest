@@ -36,6 +36,12 @@ import androidx.core.app.NotificationCompat
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import java.util.Calendar
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
+
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -44,11 +50,16 @@ fun ProfileScreen(navController: NavController) {
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
     val contentColor = if (isDarkMode.value) Color.White else Color.Black
 
+    // Remember scroll state
+    val scrollState = rememberScrollState()
+
+    // Make the content scrollable by applying a verticalScroll modifier
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(scrollState), // Enable vertical scrolling
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
@@ -61,20 +72,21 @@ fun ProfileScreen(navController: NavController) {
             isDarkMode,
             onAboutUsClick = { navController.navigate("nav_about_us") },
             onFeedbackClick = { navController.navigate("survey") },
-            onHelpClick = {navController.navigate("help")} ,
-            onPrivacyClick = {navController.navigate("privacy")}
+            onHelpClick = { navController.navigate("help") },
+            onPrivacyClick = { navController.navigate("privacy") }
         )
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Help & Policies Section
         HelpAndPoliciesSection(
             isDarkMode = isDarkMode.value,
             onFeedbackClick = { navController.navigate("survey") },
             onHelpClick = { navController.navigate("help") },
-            onPrivacyClick = {navController.navigate("privacy")}
+            onPrivacyClick = { navController.navigate("privacy") }
         )
-
     }
 }
+
 
 @Composable
 fun ProfileSection(contentColor: Color) {
