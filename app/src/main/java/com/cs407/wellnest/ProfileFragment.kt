@@ -75,15 +75,6 @@ fun ProfileScreen(navController: NavController) {
             onHelpClick = { navController.navigate("help") },
             onPrivacyClick = { navController.navigate("privacy") }
         )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Help & Policies Section
-        HelpAndPoliciesSection(
-            isDarkMode = isDarkMode.value,
-            onFeedbackClick = { navController.navigate("survey") },
-            onHelpClick = { navController.navigate("help") },
-            onPrivacyClick = { navController.navigate("privacy") }
-        )
     }
 }
 
@@ -158,10 +149,14 @@ fun ProfileSection(contentColor: Color) {
     )
 }
 
-
-
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick:() -> Unit) {
+fun SettingsSection(
+    isDarkMode: MutableState<Boolean>,
+    onAboutUsClick: () -> Unit,
+    onFeedbackClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    onPrivacyClick: () -> Unit
+) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -176,17 +171,14 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             text = "Notification Preferences",
             style = MaterialTheme.typography.titleSmall,
             color = textColor,
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .clickable { onAboutUsClick() }
-
+            modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        //Meditation Reminder
-                ReminderPreference(
-                    title = "Meditation Reminder",
-                    isDarkMode = isDarkMode.value
-                )
+        // Meditation Reminder
+        ReminderPreference(
+            title = "Meditation Reminder",
+            isDarkMode = isDarkMode.value
+        )
 
         // Bedtime Reminder
         ReminderPreference(
@@ -200,18 +192,42 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             isDarkMode = isDarkMode.value
         )
 
+        // Dark Mode Toggle
         DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Help & Policies Section
+        // Help & Policies
         Text(
             text = "Help & Policies",
             style = MaterialTheme.typography.titleSmall,
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick, onHelpClick, onPrivacyClick )
+
+        // Help Option
+        HelpPolicyItem(
+            title = "Help",
+            icon = painterResource(id = R.drawable.icon_help),
+            textColor = textColor,
+            onClick = onHelpClick
+        )
+
+        // Privacy Notice
+        HelpPolicyItem(
+            title = "Privacy Notice",
+            icon = rememberVectorPainter(image = Icons.Default.Lock),
+            textColor = textColor,
+            onClick = onPrivacyClick
+        )
+
+        // Feedback
+        HelpPolicyItem(
+            title = "Feedback",
+            icon = painterResource(id = R.drawable.icon_comment),
+            textColor = textColor,
+            onClick = onFeedbackClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -226,6 +242,7 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
         )
     }
 }
+
 
 @Composable
 fun ReminderPreference(
