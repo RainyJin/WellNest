@@ -160,7 +160,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection(onMeditationClick = { navController.navigate("meditation") })
+            TopSection(onMeditationClick = { navController.navigate("meditation") }, onPetClick={navController.navigate("pet_profile")})
             Spacer(modifier = Modifier.height(16.dp))
             Box(
                 modifier = Modifier

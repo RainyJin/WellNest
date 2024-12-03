@@ -3,6 +3,8 @@ package com.cs407.wellnest.data
 import java.time.LocalDate
 import androidx.room.*
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -30,19 +32,26 @@ interface CountdownDao {
     )
 }
 
-@Database(entities = [CountdownEntity::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
+// Migration strategy
+val MIGRATION_1_2 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE your_table ADD COLUMN new_column_name TEXT")
+    }
+}
+
+@Database(entities = [CountdownEntity::class], version = 3)
+abstract class AppDatabase1 : RoomDatabase() {
     abstract fun countdownDao(): CountdownDao
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null
-        fun getDatabase(context: android.content.Context): AppDatabase {
+        private var INSTANCE: AppDatabase1? = null
+        fun getDatabase(context: android.content.Context): AppDatabase1 {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build()
+                    AppDatabase1::class.java,
+                    "app_database1"
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }
