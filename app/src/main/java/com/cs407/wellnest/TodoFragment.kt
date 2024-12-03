@@ -1,5 +1,10 @@
 package com.cs407.wellnest
 
+import android.content.Context
+import android.opengl.GLSurfaceView
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,15 +18,121 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.filament.Camera
+import com.google.android.filament.Engine
+import com.google.android.filament.EntityManager
+import com.google.android.filament.Renderer
+import com.google.android.filament.Scene
+import com.google.android.filament.View
+import com.google.android.filament.Viewport
+import com.google.android.filament.gltfio.AssetLoader
+import com.google.android.filament.gltfio.MaterialProvider
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import io.github.sceneview.Scene
+import io.github.sceneview.animation.ModelAnimator
+import io.github.sceneview.animation.Transition.animateRotation
+import io.github.sceneview.math.Position
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberCollisionSystem
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberMainLightNode
+import io.github.sceneview.rememberMaterialLoader
+import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberNode
+import io.github.sceneview.rememberNodes
+import io.github.sceneview.rememberRenderer
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
+import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
+import java.nio.ByteBuffer
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Composable
-fun TodoScreen(navController: NavController) {
+fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
+    val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
+
+    val nextTenDays = generateNextTenDays()
+    val groupedTodos = expandRecurringTodos(todos, nextTenDays)
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val engine = rememberEngine()
+    val modelLoader = rememberModelLoader(engine)
+    val environmentLoader = rememberEnvironmentLoader(engine)
+
+    // Set up camera and rotation for the 3D view
+    val cameraNode = rememberCameraNode(engine).apply {
+        position = Position(x = 0.0f, y = 0.6f, z = 2.4f)
+    }
+    val centerNode = rememberNode(engine).apply {
+        position = Position(x = 0.0f, y = 0.8f, z = 0.0f) // Example position for the target
+    }.addChildNode(cameraNode)
+//    val cameraTransition = rememberInfiniteTransition(label = "CameraTransition")
+//    val cameraRotation by cameraTransition.animateRotation(
+//        initialValue = Rotation(y = 0.0f),
+//        targetValue = Rotation(y = 360.0f),
+//        animationSpec = infiniteRepeatable(
+//            animation = tween(durationMillis = 20000)
+//        )
+//    )
+
+    // Read the GLB model file from assets
+    val assetManager = context.assets
+    val inputStream = assetManager.open("northern_cardinal_stillAnim.glb")
+    val buffer = inputStream.readBytes()
+    inputStream.close()
+    val byteBuffer = ByteBuffer.wrap(buffer)
+
+    // Create ModelNode from model instance
+    val modelInstance = modelLoader.createModelInstance(byteBuffer)
+    val modelNode = ModelNode(modelInstance = modelInstance, scaleToUnits = 1.6f).apply {
+        // Start the first two animations on a loop
+        repeat(2) { index ->
+            playAnimation(
+                animationIndex = index,
+            )
+        }
+
+        // Add onTouch handling for the third animation
+        onTouch = { hitResult, motionEvent ->
+            // Check if third animation exists
+            if (modelInstance.animator.animationCount > 2) {
+                // Check if third animation is already playing
+                val thirdAnimationPlaying = playingAnimations.any { it.key == 2 }
+
+                if (thirdAnimationPlaying) {
+                    // If playing, stop the third animation
+                    stopAnimation(animationIndex = 2)
+                } else {
+                    // If not playing, start the third animation
+                    playAnimation(
+                        animationIndex = 2,
+                    )
+                }
+            }
+            false // Return false to allow further touch event handling
+        }
+    }
+
+    val environmentAssetLocation = "autumn_field_puresky.hdr"
+    val environment = environmentLoader.createHDREnvironment(assetFileLocation = environmentAssetLocation)
 
     Scaffold(
         floatingActionButton = {
@@ -49,27 +160,79 @@ fun TodoScreen(navController: NavController) {
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection(
-                onMeditationClick = { navController.navigate("meditation") },
-                onPetClick = { navController.navigate("pet_profile")}
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            PlaceholderImage(
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(52.dp))
+            TopSection(onMeditationClick = { navController.navigate("meditation") })
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp) // Control the height of the 3D scene
+                    .background(Color.White)
+            ) {
+                if (environment != null) {
+                    Scene(
+                        modifier = Modifier.fillMaxSize(),
+                        engine = engine,
+                        modelLoader = modelLoader,
+                        cameraNode = cameraNode,
+                        childNodes = listOf(centerNode, modelNode),
+                        onFrame = {
+//                            centerNode.rotation = cameraRotation
+                            cameraNode.lookAt(centerNode)
+                        },
+                        environment = environment
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(42.dp))
             CategoryTabs(selectedTabIndex = selectedTabIndex) { index ->
                 selectedTabIndex = index // Update selected tab when clicked
             }
             Spacer(modifier = Modifier.height(12.dp))
-            TodoListSection(
-                selectedTabIndex = selectedTabIndex,
-                navController = navController,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
-                    .weight(1f)
-            )
+            LazyColumn(
+                modifier = Modifier.fillMaxHeight(),
+                contentPadding = PaddingValues(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+            ) {
+                nextTenDays.forEach { date ->
+                    val todosForDate = groupedTodos[date] ?: emptyList()
+
+                    if (todosForDate.isNotEmpty()) {
+                        // Header for the date
+                        item {
+                            val dateText = when {
+                                date == LocalDate.now() -> "Today, ${date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+                                date == LocalDate.now().plusDays(1) -> "Tomorrow, ${date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+                                else -> date.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+                            }
+                            Text(
+                                text = dateText,
+                                fontSize = 20.sp,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        // Todos for this date
+                        items(todosForDate.filter { !it.isCompleted }) { todo ->
+                            TodoListItem(
+                                todo = todo,
+                                onCheckChanged = { isCompleted ->
+                                    scope.launch {
+                                        viewModel.updateTodoCompletion(todo.id, isCompleted)
+                                    }
+                                },
+                                onClick = {
+                                    val backgroundColor = if (selectedTabIndex == 0) {
+                                        Color(0xFF5BBAE9)
+                                    } else {
+                                        Color(0xFF48AB4C)
+                                    }
+                                    navController.navigate("edit_todo/${todo.id}/$selectedTabIndex/${backgroundColor.toArgb()}")
+                                }
+                            )
+                        }
+                    }
+                }
+
+            }
         }
     }
 
@@ -139,109 +302,59 @@ fun MeditationScreen(onBack: () -> Unit) {
 fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
     val categories = listOf("Academics", "Health")
 
-    // SingleChoiceSegmentedButtonRow for selecting categories
     SingleChoiceSegmentedButtonRow(
         modifier = Modifier
-            .fillMaxWidth() // Make the row fill the available width
-            .padding(horizontal = 4.dp) // Add padding to the sides for better spacing
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
             .wrapContentWidth(Alignment.CenterHorizontally)
-    ){
+    ) {
         categories.forEachIndexed { index, option ->
+            val colors = SegmentedButtonColors(
+                activeContainerColor = when (option) {
+                    "Academics" -> Color(0xFF5BBAE9)
+                    "Health" -> Color(0xFF48AB4C)
+                    else -> Color.Gray
+                },
+                activeContentColor = Color.White,
+                activeBorderColor = Color.Transparent,
+                inactiveContainerColor = Color.Transparent,
+                inactiveContentColor = Color.Gray,
+                inactiveBorderColor = Color.DarkGray,
+                disabledActiveContainerColor = Color.LightGray,
+                disabledActiveContentColor = Color.DarkGray,
+                disabledActiveBorderColor = Color.Transparent,
+                disabledInactiveContainerColor = Color.Transparent,
+                disabledInactiveContentColor = Color.LightGray,
+                disabledInactiveBorderColor = Color.Transparent
+            )
+
             SegmentedButton(
-                modifier = Modifier
-                    .weight(1f),
-                shape = SegmentedButtonDefaults. itemShape(index = index, count = categories. size),
+                modifier = Modifier.weight(1f),
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = categories.size),
                 selected = selectedTabIndex == index,
-                onClick = { onTabSelected(index)
-                }
+                onClick = { onTabSelected(index) },
+                colors = colors
             ) {
-                Text(text = option, modifier = Modifier.padding(4.dp))
+                Text(
+                    text = option,
+                    modifier = Modifier.padding(4.dp)
+                )
             }
         }
     }
 }
 
-@Composable
-fun TodoListSection(selectedTabIndex: Int,
-                    navController: NavController,
-                    modifier: Modifier = Modifier) {
-    val backgroundColor = when (selectedTabIndex) {
-        0 -> Color(0xFF5BBAE9) // Light Blue for Academics
-        else -> Color(0xFF48AB4C) // Green for Health
-    }
-
-    val academicGoals = when (selectedTabIndex) {
-        0 -> listOf(
-            TodoItem("CS 407", "Complete Zybooks Chapter 6", false),
-            TodoItem("Folklore 100", "Read 'Our Lady's Maid...'", true),
-            TodoItem("Math 101", "Prepare for Midterm Exam", false),
-            TodoItem("Physics 201", "Submit Lab Report", false),
-        )
-        else -> listOf(
-            TodoItem("40 minutes of Treadmill", "", false),
-            TodoItem("10 reps of Battemont Frappes", "", true)
-        )
-    }
-
-    LazyColumn(
-        modifier = modifier.fillMaxHeight(), // Ensure it stretches vertically
-        contentPadding = PaddingValues(
-            bottom = WindowInsets.systemBars
-                .asPaddingValues()
-                .calculateBottomPadding()
-        )
-    ) {
-        item {
-            Text("Today:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
-        }
-        items(academicGoals) { todoItem ->
-            TodoListItem(
-                course = todoItem.course,
-                description = todoItem.description,
-                isCompleted = todoItem.isCompleted,
-                onClick = {
-                    // Navigate to the edit screen with the item ID (e.g., course name)
-                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
-                }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Tomorrow:", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
-        }
-
-        items(listOf(TodoItem("Add a goal", "", false))) { todoItem ->
-            TodoListItem(
-                course = todoItem.course,
-                description = todoItem.description,
-                isCompleted = todoItem.isCompleted,
-                onClick = {
-                    // Navigate to the edit screen with a placeholder ID
-                    navController.navigate("edit_todo/${todoItem.course}/${selectedTabIndex}/${backgroundColor.toArgb()}")
-                }
-            )
-        }
-    }
-}
-
-
-data class TodoItem(
-    val course: String,
-    val description: String,
-    val isCompleted: Boolean
-)
 
 @Composable
-fun TodoListItem(course: String, description: String, isCompleted: Boolean, onClick: () -> Unit) {
-    var isChecked by remember { mutableStateOf(isCompleted) }
-
+fun TodoListItem(todo: TodoEntity,
+                 onCheckChanged: (Boolean) -> Unit,
+                 onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .clickable { onClick() }, // Trigger onClick when clicked
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -253,41 +366,96 @@ fun TodoListItem(course: String, description: String, isCompleted: Boolean, onCl
         ) {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .background(Color.Blue, shape = CircleShape)
+                    .size(30.dp)
+                    .background(Color(todo.color), shape = CircleShape)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    course,
-                    fontSize = 16.sp,
+                    todo.title,
+                    fontSize = 22.sp,
                     color = Color.DarkGray,
-                    textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+                    textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-                if (description.isNotEmpty()) {
+                if (todo.description.isNotEmpty()) {
                     Text(
-                        description,
-                        fontSize = 14.sp,
+                        todo.description,
+                        fontSize = 16.sp,
                         color = Color.Gray,
-                        textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+                        textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                     )
                 }
             }
 
-            IconButton(onClick = {
-                isChecked = !isChecked
-            }) {
+            IconButton(
+                onClick = { onCheckChanged(!todo.isCompleted) }
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_check_circle),
-                    contentDescription = if (isChecked) "Task Completed" else "Complete Task",
-                    tint = if (isChecked) Color.Green else Color.Blue
+                    contentDescription = if (todo.isCompleted) "Task Completed" else "Complete Task",
+                    tint = if (todo.isCompleted) Color(0xFF48AB4C) else Color(0xFF5BBAE9),
+                    modifier = Modifier.size(42.dp)
                 )
             }
         }
     }
 }
+
+fun generateNextTenDays(): List<LocalDate> {
+    val today = LocalDate.now()
+    return (0..9).map { today.plusDays(it.toLong()) }
+}
+
+fun expandRecurringTodos(todos: List<TodoEntity>, datesRange: List<LocalDate>): Map<LocalDate, List<TodoEntity>> {
+    val expandedTodos = mutableMapOf<LocalDate, MutableList<TodoEntity>>()
+
+    // First, add the original todos to their respective dates
+    datesRange.forEach { date ->
+        expandedTodos[date] = mutableListOf()
+    }
+
+    todos.forEach { todo ->
+        val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+        val originalDate = LocalDate.parse(todo.dueDate, dateFormatter)
+
+        when (todo.repeatOption) {
+            "Daily" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            "Weekly" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate && ChronoUnit.WEEKS.between(originalDate, date) % 1 == 0L) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            "Monthly" -> {
+                datesRange.forEach { date ->
+                    if (date >= originalDate && date.monthValue != originalDate.monthValue &&
+                        date.dayOfMonth == originalDate.dayOfMonth) {
+                        expandedTodos[date]?.add(todo)
+                    }
+                }
+            }
+            else -> {
+                // Non-recurring todos
+                if (originalDate in datesRange) {
+                    expandedTodos[originalDate]?.add(todo)
+                }
+            }
+        }
+    }
+
+    return expandedTodos
+}
+
+
 
 
 

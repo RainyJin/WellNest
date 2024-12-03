@@ -51,7 +51,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -68,6 +67,11 @@ dependencies {
     implementation(libs.androidx.storage)
     implementation(libs.androidx.ui.test.android)
     implementation(libs.androidx.room.ktx) // Using calendar view for calendar
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.common)
+    annotationProcessor(libs.androidx.room.compiler) // Only if you're using annotation processing in Java
+    ksp(libs.androidx.room.compiler)                // For Kotlin Symbol Processing (recommended for Kotlin)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
 
@@ -92,4 +96,5 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+    implementation("io.github.sceneview:sceneview:2.2.1")
 }
