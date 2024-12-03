@@ -1,9 +1,13 @@
 package com.cs407.wellnest
 
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -12,8 +16,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -25,6 +32,23 @@ import androidx.navigation.navArgument
 import com.cs407.wellnest.ui.theme.WellNestTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Toast.makeText(this, "Please allow notifications for reminders.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppDatabase.getDatabase(this)
@@ -45,14 +69,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Request notification permission
+        requestNotificationPermission()
+
+        // Initialize NotificationHelper
+        NotificationHelper(this).createNotificationChannel()
     }
 }
 
 
-
 @Composable
 fun MainScreen() {
-   val isDarkMode = remember { mutableStateOf(false) }
+    val isDarkMode = remember { mutableStateOf(false) }
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
@@ -64,12 +93,16 @@ fun MainScreen() {
             Modifier.padding(innerPadding)
         ) {
             composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
-            composable("meditation") { MeditationScreen(navController)}
-            composable("nav_calendar") { CalendarScreen() } // Reference to the Calendar screen
+            composable("nav_calendar") { CalendarScreen(navController) } // Reference to the Calendar screen
             composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
-            composable("nav_profile") {ProfileScreen(navController)  } // Reference to the Profile screen
+            composable("nav_profile") { ProfileScreen(navController) } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController) }
+            composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController) }
+            composable("meditation") { MeditationScreen(navController)}
+            composable("nav_add_item/{eventName}/{eventDate}") { AddItemFragment(navController) }
+            composable("help") { HelpScreen(navController) }
+            composable("privacy") { PrivacyScreen(navController) }
 
             // Editing a todo
             composable(
@@ -91,6 +124,7 @@ fun MainScreen() {
                     backgroundColor = backgroundColor
                 )
             }
+
         }
     }
 }
