@@ -17,18 +17,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons.Default
 import androidx.compose.material3.CardDefaults
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.cs407.wellnest.data.CountdownEntity
 import com.cs407.wellnest.ui.theme.DeepPink
 import com.cs407.wellnest.ui.theme.LightPink
 import com.cs407.wellnest.ui.theme.MidPink
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.UUID
 
 @Composable
-fun AddItemFragment(navController: NavController) {
+fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+    val backStackEntry = navController.currentBackStackEntry
+    val eventIdArg = backStackEntry?.arguments?.getString("eventId") ?: UUID.randomUUID().toString()
+    val eventDescArg = backStackEntry?.arguments?.getString("eventDesc") ?: ""
+    val eventDateArg = backStackEntry?.arguments?.getString("eventDate") ?:
+        LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"))
+    val eventRepeatArg = backStackEntry?.arguments?.getString("eventRepeat") ?: "Does not repeat"
+
     // input field, date picker, and repeat option default texts
-    var eventName by remember { mutableStateOf("") }
-    var selectedRepeatOption by remember { mutableStateOf("Does not repeat") }
-    var selectedDate by remember { mutableStateOf("Today") }
+    var eventDesc by remember { mutableStateOf(eventDescArg) }
+    var eventDate by remember { mutableStateOf(eventDateArg) }
+    var eventRepeat by remember { mutableStateOf(eventRepeatArg) }
 
     // hardcoded suggestion list
     val suggestions = remember {
@@ -43,11 +57,9 @@ fun AddItemFragment(navController: NavController) {
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
         navController.context,
-        { _, year, month, day ->
-            selectedDate = "$month/$day/$year"
-        },
+        { _, year, month, day -> eventDate = "${month + 1}/$day/$year" },
         calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
@@ -84,8 +96,8 @@ fun AddItemFragment(navController: NavController) {
 
                 // input field
                 TextField(
-                    value = eventName,
-                    onValueChange = { eventName = it },
+                    value = eventDesc,
+                    onValueChange = { eventDesc = it },
                     placeholder = { Text("Enter a new event...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -98,8 +110,8 @@ fun AddItemFragment(navController: NavController) {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconText(icon = R.drawable.ic_calendar, text = selectedDate, onClick = { datePickerDialog.show() })
-                    IconText(icon = R.drawable.ic_repeat, text = selectedRepeatOption, onClick = { expandedDropdown = !expandedDropdown})
+                    IconText(icon = R.drawable.ic_calendar, text = eventDate, onClick = { datePickerDialog.show() })
+                    IconText(icon = R.drawable.ic_repeat, text = eventRepeat, onClick = { expandedDropdown = !expandedDropdown})
                 }
 
                 // box to overlay the dropdown menu
@@ -116,7 +128,7 @@ fun AddItemFragment(navController: NavController) {
                                 DropdownMenuItem(
                                     text = { Text(option) },
                                     onClick = {
-                                        selectedRepeatOption = option
+                                        eventRepeat = option
                                         expandedDropdown = false
                                     }
                                 )
@@ -129,15 +141,30 @@ fun AddItemFragment(navController: NavController) {
 
                 // save button
                 Button(
-                    onClick = { navController.popBackStack() },
+                    onClick = {
+                        val countdown = CountdownEntity(
+                            id = eventIdArg,
+                            targetDate = LocalDate.parse(
+                                eventDate,
+                                DateTimeFormatter.ofPattern("M/d/yyyy")
+                            ).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")),
+                            description = eventDesc,
+                            repeatOption = eventRepeat
+                        )
+
+                        viewModel.apply {
+                            viewModelScope.launch {
+                                upsertCountdown(countdown)
+                            }
+                        }
+                        navController.popBackStack()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = MidPink),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Save")
                 }
             }
-
-
         }
 
         // suggestion title

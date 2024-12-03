@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.devtools.ksp") version "1.9.0-1.0.13"
 }
 
 android {
@@ -50,7 +51,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -65,7 +65,13 @@ dependencies {
     implementation(libs.material.calendar.view)
     implementation(libs.protolite.well.known.types)
     implementation(libs.androidx.storage)
-    implementation(libs.androidx.ui.test.android) // Using calendar view for calendar
+    implementation(libs.androidx.ui.test.android)
+    implementation(libs.androidx.room.ktx) // Using calendar view for calendar
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.common)
+    annotationProcessor(libs.androidx.room.compiler) // Only if you're using annotation processing in Java
+    ksp(libs.androidx.room.compiler)                // For Kotlin Symbol Processing (recommended for Kotlin)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
 
@@ -87,5 +93,8 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
     implementation ("androidx.navigation:navigation-compose:2.7.0")
     implementation ("androidx.media3:media3-exoplayer:1.0.0")
-
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation("io.github.sceneview:sceneview:2.2.1")
 }
