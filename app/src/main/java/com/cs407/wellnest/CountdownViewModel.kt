@@ -3,12 +3,12 @@ package com.cs407.wellnest
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.cs407.wellnest.data.AppDatabase
+import com.cs407.wellnest.data.AppDatabase1
 import com.cs407.wellnest.data.CountdownEntity
 import kotlinx.coroutines.launch
 
 class CountdownViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = AppDatabase.getDatabase(application)
+    private val database = AppDatabase1.getDatabase(application)
     private val countdownDao = database.countdownDao()
 
     init {
