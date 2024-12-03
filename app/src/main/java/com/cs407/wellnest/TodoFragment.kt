@@ -239,17 +239,17 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
 }
 
 @Composable
-fun TopSection(onMeditationClick: () -> Unit) {
+fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(
-            onClick = { /* Another action */ },
+            onClick = onPetClick,
             modifier = Modifier.size(48.dp)
-        ) {
+            ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_todo),
+                painter = painterResource(id = R.drawable.ic_pet),
                 contentDescription = "First Button",
                 modifier = Modifier.size(32.dp)
             )

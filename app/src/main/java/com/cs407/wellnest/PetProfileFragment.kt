@@ -19,25 +19,42 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.navigation.NavController
 
 @Composable
-fun PetProfileScreen() {
+fun PetProfileScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Speech bubble section
-        Box(
+        Row(
             modifier = Modifier
-                .width(300.dp)
-                .padding(16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.LightGray)
-                .padding(16.dp)
-                .align(Alignment.End)
+                .fillMaxWidth()
+                .align(Alignment.CenterHorizontally)
         ) {
-            Text(text = "How are you today?", fontSize = 18.sp)
+            IconButton(
+                onClick = { navController.popBackStack() }
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.Black
+                )
+            }
+            // Speech bubble section
+            Box(
+                modifier = Modifier
+                    .width(300.dp)
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.LightGray)
+                    .padding(16.dp)
+                    .align(Alignment.Bottom)
+            ) {
+                Text(text = "How are you today?", fontSize = 18.sp)
+            }
         }
 
         // Pet placeholder
