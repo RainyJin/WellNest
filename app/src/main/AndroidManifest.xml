@@ -39,7 +39,6 @@
             android:name="com.google.ar.core"
             android:value="required" />
         <receiver android:name=".NotificationReceiver" />
-    </application>
 
         <!-- Google Fit API Configuration -->
         <meta-data
