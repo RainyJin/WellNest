@@ -48,10 +48,9 @@ class MainActivity : ComponentActivity() {
 }
 
 
-
 @Composable
 fun MainScreen() {
-   val isDarkMode = remember { mutableStateOf(false) }
+    val isDarkMode = remember { mutableStateOf(false) }
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
@@ -69,7 +68,7 @@ fun MainScreen() {
             composable("nav_about_us") { AboutUsScreen(navController) }
             composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController) }
-            composable("meditation") { MeditationScreen(navController)}
+            composable("meditation") { MeditationScreen(navController) }
             composable("nav_add_item/{eventName}/{eventDate}") { AddItemFragment(navController) }
 
             // Editing a todo
@@ -83,7 +82,8 @@ fun MainScreen() {
             ) { backStackEntry ->
                 val course = backStackEntry.arguments?.getString("course") ?: ""
                 val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
-                val backgroundColorInt = backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
+                val backgroundColorInt =
+                    backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
                 val backgroundColor = Color(backgroundColorInt.toLong())
 
 
