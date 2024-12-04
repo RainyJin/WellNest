@@ -1,9 +1,13 @@
 package com.cs407.wellnest
 
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -12,8 +16,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -25,8 +32,26 @@ import androidx.navigation.navArgument
 import com.cs407.wellnest.ui.theme.WellNestTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Toast.makeText(this, "Please allow notifications for reminders.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppDatabase.getDatabase(this)
         enableEdgeToEdge()
         setContent {
             WellNestTheme {
@@ -44,6 +69,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Request notification permission
+        requestNotificationPermission()
+
+        // Initialize NotificationHelper
+        NotificationHelper(this).createNotificationChannel()
     }
 }
 
@@ -68,32 +99,34 @@ fun MainScreen() {
             composable("nav_about_us") { AboutUsScreen(navController) }
             composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController) }
-            composable("meditation") { MeditationScreen(navController) }
-            composable("nav_add_item/{eventName}/{eventDate}") { AddItemFragment(navController) }
+
+            composable("meditation") { MeditationScreen(navController)}
+            composable("pet_profile") { PetProfileScreen(navController) }
+            composable("help") { HelpScreen(navController) }
+            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}") { AddItemFragment(navController) }
+            composable("privacy") { PrivacyScreen(navController) }
 
             // Editing a todo
             composable(
-                "edit_todo/{course}/{selectedTabIndex}/{backgroundColor}",
+                "edit_todo/{todoId}/{selectedTabIndex}/{backgroundColor}",
                 arguments = listOf(
-                    navArgument("course") { type = NavType.StringType },
+                    navArgument("todoId") { type = NavType.StringType },
                     navArgument("selectedTabIndex") { type = NavType.IntType },
-                    navArgument("backgroundColor") { type = NavType.StringType }
+                    navArgument("backgroundColor") { type = NavType.IntType }
                 )
             ) { backStackEntry ->
-                val course = backStackEntry.arguments?.getString("course") ?: ""
+                val todoId = backStackEntry.arguments?.getString("todoId")
                 val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
-                val backgroundColorInt =
-                    backStackEntry.arguments?.getString("backgroundColor")?.toInt() ?: 0xFF5BBAE9
-                val backgroundColor = Color(backgroundColorInt.toLong())
 
-
+                val backgroundColorInt = backStackEntry.arguments?.getInt("backgroundColor") ?: 0xFF5BBAE9.toInt()
+                val backgroundColor = Color(backgroundColorInt)
+                
                 EditTodoScreen(
-                    itemName = course,
-                    navController,
-                    backgroundColor = backgroundColor,
+                    itemId = todoId,
+                    navController = navController,
+                    backgroundColor = backgroundColor
                 )
             }
-
         }
     }
 }

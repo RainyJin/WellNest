@@ -13,35 +13,89 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import android.app.DatePickerDialog
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.UUID
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun EditTodoScreen(itemName: String, navController: NavController, backgroundColor: Color) {
-    var goalText by remember { mutableStateOf(TextFieldValue(itemName)) }
+fun EditTodoScreen(itemId: String?,
+                   navController: NavController,
+                   backgroundColor: Color,
+                   viewModel: TodoViewModel = viewModel()
+) {
+    var goalText by remember { mutableStateOf(TextFieldValue("")) }
     var descriptionText by remember { mutableStateOf(TextFieldValue("")) }
     var selectedRepeatOption by remember { mutableStateOf("Does not repeat") }
-    var expandedDropdown by remember { mutableStateOf(false) }
-
-    val repeatOptions = listOf("Does not repeat", "Daily", "Weekly", "Monthly")
-
     var selectedDate by remember { mutableStateOf(getCurrentDate()) }
+    var expandedDropdown by remember { mutableStateOf(false) }
+    val repeatOptions = listOf("Does not repeat", "Daily", "Weekly", "Monthly")
+    val category = if (backgroundColor == Color(0xFF5BBAE9)) 0 else 1
+
     val calendar = Calendar.getInstance()
+    val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
     val datePickerDialog = DatePickerDialog(
         navController.context,
         { _, year, month, day ->
-            selectedDate = "$month/$day/$year"
+            selectedDate = dateFormatter.format(
+                LocalDate.of(year, month + 1, day) // Properly constructs the date
+            )
         },
         calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
+
+    var expandedColorDropdown by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf(backgroundColor.toArgb()) }
+
+    // Define a list of color options
+    val colorOptions = listOf(
+        ColorOption(Color(0xFF5BBAE9), "Blue"),
+        ColorOption(Color(0xFF48AB4C), "Green"),
+        ColorOption(Color(0xFFF7B32D), "Yellow"),
+        ColorOption(Color(0xFFE76F51), "Coral"),
+        ColorOption(Color(0xFF6A4C93), "Purple"),
+        ColorOption(Color(0xFF1A535C), "Teal")
+    )
+
+    val todoItem by remember(itemId) {
+        if (itemId != null && itemId != "new") {
+            viewModel.getTodoByIdFlow(itemId)
+        } else {
+            MutableStateFlow(null)
+        }
+    }.collectAsState(initial = null)
+
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(todoItem) {
+        println("LaunchedEffect triggered with itemId: $itemId")
+        if (itemId != null && itemId != "new") {
+            val existingTodo = viewModel.getTodoById(itemId)
+            println("Existing todo retrieved: $existingTodo")
+            existingTodo?.let { todo ->
+                goalText = TextFieldValue(todo.title)
+                descriptionText = TextFieldValue(todo.description)
+                selectedDate = todo.dueDate
+                selectedRepeatOption = todo.repeatOption
+                selectedColor = todo.color
+            }
+        }
+    }
 
     val (saveButtonColor, suggestionColor) = when (backgroundColor) {
         Color(0xFF5BBAE9) -> Color(0xFF338FBD) to Color(0xFFD3E7F7) // Lighter blue
@@ -67,6 +121,7 @@ fun EditTodoScreen(itemName: String, navController: NavController, backgroundCol
                 modifier = Modifier
                     .padding(vertical = 6.dp, horizontal = 20.dp)
             ) {
+
                 // Top bar with title and close button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -85,13 +140,57 @@ fun EditTodoScreen(itemName: String, navController: NavController, backgroundCol
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Editable goal text field
-                OutlinedTextField(
-                    value = goalText,
-                    onValueChange = { goalText = it },
-                    label = { Text("Course") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    Box {
+                        // Color preview box that triggers dropdown
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(Color(selectedColor), shape = CircleShape)
+                                .clickable { expandedColorDropdown = true }
+                        )
+
+                        DropdownMenu(
+                            expanded = expandedColorDropdown,
+                            onDismissRequest = { expandedColorDropdown = false },
+                            modifier = Modifier.width(120.dp)
+                        ) {
+                            colorOptions.forEach { colorOption ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .background(colorOption.color, shape = CircleShape)
+                                            )
+                                            Text(colorOption.name)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedColor = colorOption.color.toArgb()
+                                        expandedColorDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = goalText,
+                        onValueChange = { goalText = it },
+                        label = { Text("Course") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -188,7 +287,23 @@ fun EditTodoScreen(itemName: String, navController: NavController, backgroundCol
                 // Save button beneath the "Does not repeat" section
                 Spacer(modifier = Modifier.height(16.dp)) // Add space before the save button
                 Button(
-                    onClick = { navController.navigate("nav_todo") },
+                    onClick = {
+                        scope.launch {
+                            val todo = TodoEntity(
+                                id = if (itemId != null && itemId != "new") itemId else UUID.randomUUID().toString(),
+                                title = goalText.text,
+                                description = descriptionText.text,
+                                dueDate = selectedDate,
+                                category = category,
+                                repeatOption = selectedRepeatOption,
+                                color = selectedColor
+                            )
+                            viewModel.saveTodo(todo)
+                            navController.navigate("nav_todo") {
+                                popUpTo("nav_todo") { inclusive = true }
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = saveButtonColor)
                 ) {
@@ -249,4 +364,9 @@ fun SuggestionItem(suggestion: String, backgroundColor: Color) {
         }
     }
 }
+
+data class ColorOption(
+    val color: Color,
+    val name: String
+)
 

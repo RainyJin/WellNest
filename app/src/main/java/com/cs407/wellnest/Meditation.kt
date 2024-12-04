@@ -2,14 +2,15 @@ package com.cs407.wellnest
 
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,22 +18,40 @@ import androidx.navigation.NavHostController
 import com.cs407.wellnest.R
 import kotlinx.coroutines.delay
 
+data class SoundOption(
+    val name: String,
+    val resourceId: Int
+)
+
 @Composable
 fun MeditationScreen(navController: NavHostController) {
-    val context = LocalContext.current // Get context outside remember
+    val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
-    var timeLeft by remember { mutableStateOf(0) } // Remaining time in seconds
-    var userTimeInput by remember { mutableStateOf("") } // User input for meditation time
+    var timeLeft by remember { mutableStateOf(0) }
+    var userTimeInput by remember { mutableStateOf("") }
+    var showSoundDialog by remember { mutableStateOf(false) }
 
+    // List of available sounds
+    val soundOptions = remember {
+        listOf(
+            SoundOption("Rain Sound", R.raw.rain_sound),
+            // Add more sounds here
+            SoundOption("Ocean Waves", R.raw.ocean_waves),
+            SoundOption("Forest Birds", R.raw.forest),
+            SoundOption("Meditation Bell", R.raw.wind_chimes)
+        )
+    }
 
-    // Remember and initialize the MediaPlayer
-    val mediaPlayer = remember {
-        MediaPlayer.create(context, R.raw.rain_sound).apply {
-            isLooping = true // Enable looping
+    var selectedSound by remember { mutableStateOf(soundOptions[0]) }
+
+    // Initialize MediaPlayer with selected sound
+    val mediaPlayer = remember(selectedSound) {
+        MediaPlayer.create(context, selectedSound.resourceId).apply {
+            isLooping = true
         }
     }
 
-    // Start a countdown when timeLeft is set
+    // Countdown effect
     LaunchedEffect(timeLeft) {
         if (timeLeft > 0) {
             delay(1000L)
@@ -65,6 +84,15 @@ fun MeditationScreen(navController: NavHostController) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Sound selection button
+        Button(
+            onClick = { showSoundDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Selected Sound: ${selectedSound.name}")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
         OutlinedTextField(
             value = userTimeInput,
             onValueChange = { userTimeInput = it.filter { char -> char.isDigit() } },
@@ -76,7 +104,7 @@ fun MeditationScreen(navController: NavHostController) {
         Button(
             onClick = {
                 val minutes = userTimeInput.toIntOrNull() ?: 0
-                timeLeft = minutes * 60 // Convert to seconds
+                timeLeft = minutes * 60
                 if (!isPlaying) {
                     mediaPlayer.start()
                     isPlaying = true
@@ -105,10 +133,47 @@ fun MeditationScreen(navController: NavHostController) {
             Text("Back to Todo Screen")
         }
     }
+
+    // Sound selection dialog
+    if (showSoundDialog) {
+        AlertDialog(
+            onDismissRequest = { showSoundDialog = false },
+            title = { Text("Choose Sound") },
+            text = {
+                Column {
+                    soundOptions.forEach { sound ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (isPlaying) {
+                                        mediaPlayer.stop()
+                                    }
+                                    selectedSound = sound
+                                    showSoundDialog = false
+                                }
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = sound.name,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSoundDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
         }
     }
 }
-

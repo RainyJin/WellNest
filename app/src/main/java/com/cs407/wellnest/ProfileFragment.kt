@@ -1,5 +1,12 @@
 package com.cs407.wellnest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -25,9 +32,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.core.app.NotificationCompat
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import java.util.Calendar
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
+
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -36,11 +50,16 @@ fun ProfileScreen(navController: NavController) {
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
     val contentColor = if (isDarkMode.value) Color.White else Color.Black
 
+    // Remember scroll state
+    val scrollState = rememberScrollState()
+
+    // Make the content scrollable by applying a verticalScroll modifier
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(scrollState), // Enable vertical scrolling
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
@@ -52,10 +71,13 @@ fun ProfileScreen(navController: NavController) {
         SettingsSection(
             isDarkMode,
             onAboutUsClick = { navController.navigate("nav_about_us") },
-            onFeedbackClick = { navController.navigate("survey") }
+            onFeedbackClick = { navController.navigate("survey") },
+            onHelpClick = { navController.navigate("help") },
+            onPrivacyClick = { navController.navigate("privacy") }
         )
     }
 }
+
 
 @Composable
 fun ProfileSection(contentColor: Color) {
@@ -127,11 +149,14 @@ fun ProfileSection(contentColor: Color) {
     )
 }
 
-
-
-
 @Composable
-fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Unit, onFeedbackClick: () -> Unit) {
+fun SettingsSection(
+    isDarkMode: MutableState<Boolean>,
+    onAboutUsClick: () -> Unit,
+    onFeedbackClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    onPrivacyClick: () -> Unit
+) {
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -146,17 +171,14 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             text = "Notification Preferences",
             style = MaterialTheme.typography.titleSmall,
             color = textColor,
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .clickable { onAboutUsClick() }
-
+            modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        //Meditation Reminder
-                ReminderPreference(
-                    title = "Meditation Reminder",
-                    isDarkMode = isDarkMode.value
-                )
+        // Meditation Reminder
+        ReminderPreference(
+            title = "Meditation Reminder",
+            isDarkMode = isDarkMode.value
+        )
 
         // Bedtime Reminder
         ReminderPreference(
@@ -170,18 +192,42 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
             isDarkMode = isDarkMode.value
         )
 
+        // Dark Mode Toggle
         DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Help & Policies Section
+        // Help & Policies
         Text(
             text = "Help & Policies",
             style = MaterialTheme.typography.titleSmall,
             color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        HelpAndPoliciesSection(isDarkMode.value, onFeedbackClick)
+
+        // Help Option
+        HelpPolicyItem(
+            title = "Help",
+            icon = painterResource(id = R.drawable.icon_help),
+            textColor = textColor,
+            onClick = onHelpClick
+        )
+
+        // Privacy Notice
+        HelpPolicyItem(
+            title = "Privacy Notice",
+            icon = rememberVectorPainter(image = Icons.Default.Lock),
+            textColor = textColor,
+            onClick = onPrivacyClick
+        )
+
+        // Feedback
+        HelpPolicyItem(
+            title = "Feedback",
+            icon = painterResource(id = R.drawable.icon_comment),
+            textColor = textColor,
+            onClick = onFeedbackClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -197,23 +243,43 @@ fun SettingsSection(isDarkMode: MutableState<Boolean>, onAboutUsClick: () -> Uni
     }
 }
 
+
 @Composable
 fun ReminderPreference(
     title: String,
     isDarkMode: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val textColor = if (isDarkMode) Color.White else Color.Black
     val timeState = remember { mutableStateOf("No time set") }
     val isReminderOn = remember { mutableStateOf(false) }
     val calendar = Calendar.getInstance()
+    val notificationHelper = remember { NotificationHelper(context) }
 
     // Time picker dialog
     val timePickerDialog = TimePickerDialog(
-        LocalContext.current,
+        context,
         { _, hourOfDay, minute ->
             val timeString = String.format("%02d:%02d", hourOfDay, minute)
             timeState.value = timeString
+
+            // Schedule notification
+            val notificationCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hourOfDay)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+
+                // If the time has already passed today, schedule for tomorrow
+                if (timeInMillis < System.currentTimeMillis()) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
+            }
+
+            notificationHelper.scheduleNotification(
+                title,
+                notificationCalendar.timeInMillis
+            )
         },
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
@@ -230,7 +296,6 @@ fun ReminderPreference(
         ) {
             Text(text = title, color = textColor)
 
-            // Switch for enabling/disabling the reminder
             Switch(
                 checked = isReminderOn.value,
                 onCheckedChange = { isChecked ->
@@ -239,12 +304,12 @@ fun ReminderPreference(
                         timePickerDialog.show()
                     } else {
                         timeState.value = "No time set"
+                        // Cancel any existing notifications here if needed
                     }
                 }
             )
         }
 
-        // Display the selected time or default message
         if (isReminderOn.value) {
             Text(
                 text = "Reminder set for: ${timeState.value}",
@@ -255,6 +320,8 @@ fun ReminderPreference(
         }
     }
 }
+
+
 
 @Composable
 fun NotificationPreferenceItem(title: String, isDarkMode: Boolean) {
@@ -293,7 +360,7 @@ fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
 }
 
 @Composable
-fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
+fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick: () -> Unit) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val options = listOf("Help", "Privacy Notice", "Feedback", "Delete account")
     val icons = listOf(
@@ -303,10 +370,16 @@ fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit) {
 
     )
 
+
     Column {
         options.zip(icons).forEach { (option, icon) ->
             HelpPolicyItem(option, icon, textColor) {
-                if (option == "Feedback") onFeedbackClick()
+                when (option) {
+                    "Help" -> onHelpClick() // Navigate to HelpScreen
+                    "Feedback" -> onFeedbackClick()
+                    "Privacy Notice" -> onPrivacyClick()
+                    // Add other cases if needed
+                }
             }
         }
     }
