@@ -1,47 +1,57 @@
 package com.cs407.wellnest
 
+
+import android.content.Context
+import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cs407.wellnest.utils.GoogleFitHelper
+
 
 @Composable
 fun StatisticsScreen() {
-    var selectedTabIndex by remember { mutableStateOf(0) } // Track selected tab index
+    val context = LocalContext.current
+    val googleFitHelper = remember { GoogleFitHelper(context) }
 
-    // Separate states for each tab
+
+    // Health states for the "Day" tab
     var daySteps by remember { mutableStateOf(0) }
-    var dayCalories by remember { mutableStateOf(185) }
-    var daySleep by remember { mutableStateOf(8) }
-    var dayRunDistance by remember { mutableStateOf(5) }
-    var dayGymHours by remember { mutableStateOf(1) }
-    var dayFoodLog by remember { mutableStateOf("") }
+    var dayCalories by remember { mutableStateOf(0.0) }
+    var dayDistance by remember { mutableStateOf(0.0) }
     var dayGoal by remember { mutableStateOf(10000) }
 
-    var weekSteps by remember { mutableStateOf(0) }
-    var weekCalories by remember { mutableStateOf(0) }
-    var weekSleep by remember { mutableStateOf(0) }
-    var weekRunDistance by remember { mutableStateOf(0) }
-    var weekGymHours by remember { mutableStateOf(0) }
-    var weekFoodLog by remember { mutableStateOf("") }
-    var weekGoal by remember { mutableStateOf(70000) }
 
-    var monthSteps by remember { mutableStateOf(0) }
-    var monthCalories by remember { mutableStateOf(0) }
-    var monthSleep by remember { mutableStateOf(0) }
-    var monthRunDistance by remember { mutableStateOf(0) }
-    var monthGymHours by remember { mutableStateOf(0) }
-    var monthFoodLog by remember { mutableStateOf("") }
-    var monthGoal by remember { mutableStateOf(300000) }
+    var selectedTabIndex by remember { mutableStateOf(0) } // Track selected tab index
+
+
+    // Check and fetch Google Fit data
+    LaunchedEffect(Unit) {
+        if (googleFitHelper.hasGoogleFitPermissions()) {
+            fetchGoogleFitData(googleFitHelper) { steps, distance, calories ->
+                daySteps = steps
+                dayDistance = distance
+                dayCalories = calories
+            }
+        } else {
+            val activity = context as? ComponentActivity
+            activity?.let {
+                googleFitHelper.requestGoogleFitPermissions(it, requestCode = 1001)
+            }
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -55,6 +65,7 @@ fun StatisticsScreen() {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
+
 
         // Tabs for Day, Week, Month
         TabRow(
@@ -70,61 +81,65 @@ fun StatisticsScreen() {
             }
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Display content based on selected tab
-        when (selectedTabIndex) {
-            0 -> TimeRangeContent(
+
+        // Display content for the Day tab (Google Fit data is fetched for the day only)
+        if (selectedTabIndex == 0) {
+            TimeRangeContent(
                 steps = daySteps,
-                calories = dayCalories,
-                sleep = daySleep,
-                runDistance = dayRunDistance,
-                gymHours = dayGymHours,
-                foodLog = dayFoodLog,
+                calories = dayCalories.toInt(),
+                sleep = 8, // Example static value
+                runDistance = dayDistance.toInt(),
+                gymHours = 1, // Example static value
+                foodLog = "",
                 goal = dayGoal,
                 onStepsChange = { daySteps = it },
-                onCaloriesChange = { dayCalories = it },
-                onSleepChange = { daySleep = it },
-                onRunDistanceChange = { dayRunDistance = it },
-                onGymHoursChange = { dayGymHours = it },
-                onFoodLogChange = { dayFoodLog = it },
+                onCaloriesChange = { dayCalories = it.toDouble() },
+                onSleepChange = { /* No-op */ },
+                onRunDistanceChange = { dayDistance = it.toDouble() },
+                onGymHoursChange = { /* No-op */ },
+                onFoodLogChange = { /* No-op */ },
                 onGoalChange = { dayGoal = it }
             )
-            1 -> TimeRangeContent(
-                steps = weekSteps,
-                calories = weekCalories,
-                sleep = weekSleep,
-                runDistance = weekRunDistance,
-                gymHours = weekGymHours,
-                foodLog = weekFoodLog,
-                goal = weekGoal,
-                onStepsChange = { weekSteps = it },
-                onCaloriesChange = { weekCalories = it },
-                onSleepChange = { weekSleep = it },
-                onRunDistanceChange = { weekRunDistance = it },
-                onGymHoursChange = { weekGymHours = it },
-                onFoodLogChange = { weekFoodLog = it },
-                onGoalChange = { weekGoal = it }
-            )
-            2 -> TimeRangeContent(
-                steps = monthSteps,
-                calories = monthCalories,
-                sleep = monthSleep,
-                runDistance = monthRunDistance,
-                gymHours = monthGymHours,
-                foodLog = monthFoodLog,
-                goal = monthGoal,
-                onStepsChange = { monthSteps = it },
-                onCaloriesChange = { monthCalories = it },
-                onSleepChange = { monthSleep = it },
-                onRunDistanceChange = { monthRunDistance = it },
-                onGymHoursChange = { monthGymHours = it },
-                onFoodLogChange = { monthFoodLog = it },
-                onGoalChange = { monthGoal = it }
+        } else {
+            // Static content for Week and Month tabs
+            TimeRangeContent(
+                steps = 0, // Example static value
+                calories = 0,
+                sleep = 0,
+                runDistance = 0,
+                gymHours = 0,
+                foodLog = "",
+                goal = 10000, // Example static goal
+                onStepsChange = { /* No-op */ },
+                onCaloriesChange = { /* No-op */ },
+                onSleepChange = { /* No-op */ },
+                onRunDistanceChange = { /* No-op */ },
+                onGymHoursChange = { /* No-op */ },
+                onFoodLogChange = { /* No-op */ },
+                onGoalChange = { /* No-op */ }
             )
         }
     }
 }
+
+
+private fun fetchGoogleFitData(
+    googleFitHelper: GoogleFitHelper,
+    onStepsFetched: (steps: Int, distance: Double, calories: Double) -> Unit
+) {
+    googleFitHelper.fetchDailyData(
+        onSuccess = { steps, distance, calories ->
+            onStepsFetched(steps, distance, calories)
+        },
+        onFailure = { exception ->
+            Log.e("StatisticsScreen", "Failed to fetch Google Fit data: ${exception.message}")
+        }
+    )
+}
+
 
 @Composable
 fun TimeRangeContent(
@@ -145,6 +160,7 @@ fun TimeRangeContent(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var dialogType by remember { mutableStateOf("") }
+
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -172,7 +188,9 @@ fun TimeRangeContent(
             }
         }
 
+
         Spacer(modifier = Modifier.height(24.dp))
+
 
         // Step, Distance, Calories, Sleep Sections
         Row(
@@ -183,7 +201,7 @@ fun TimeRangeContent(
                 showDialog = true
                 dialogType = "Steps"
             }
-            InfoBox("Distance", "4.5 km", Color(0xFFADD8E6))
+            InfoBox("Distance", "$runDistance m", Color(0xFFADD8E6))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(
@@ -199,92 +217,9 @@ fun TimeRangeContent(
                 dialogType = "Sleep"
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Workouts Section
-        Text("Workouts", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        WorkoutItem("Run", "$runDistance km") {
-            showDialog = true
-            dialogType = "Run"
-        }
-        WorkoutItem("Gym", "$gymHours hours") {
-            showDialog = true
-            dialogType = "Gym"
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Food Section
-        Text("Food", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        InfoBox("Food Log", foodLog, Color(0xFFFFE4B5)) {
-            showDialog = true
-            dialogType = "Food"
-        }
-    }
-
-    // Dialog for Setting Values
-    if (showDialog) {
-        SetValueDialog(
-            currentValue = when (dialogType) {
-                "Steps" -> steps.toString()
-                "Calories" -> calories.toString()
-                "Sleep" -> sleep.toString()
-                "Run" -> runDistance.toString()
-                "Gym" -> gymHours.toString()
-                "Food" -> foodLog
-                else -> goal.toString()
-            },
-            label = dialogType,
-            onDismiss = { showDialog = false },
-            onConfirm = { newValue ->
-                when (dialogType) {
-                    "Steps" -> onStepsChange(newValue.toInt())
-                    "Calories" -> onCaloriesChange(newValue.toInt())
-                    "Sleep" -> onSleepChange(newValue.toInt())
-                    "Run" -> onRunDistanceChange(newValue.toInt())
-                    "Gym" -> onGymHoursChange(newValue.toInt())
-                    "Food" -> onFoodLogChange(newValue)
-                    "Goal" -> onGoalChange(newValue.toInt())
-                }
-                showDialog = false
-            }
-        )
     }
 }
 
-@Composable
-fun SetValueDialog(currentValue: String, label: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var text by remember { mutableStateOf(currentValue) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Set $label") },
-        text = {
-            Column {
-                Text("Enter the value for $label:")
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text(label) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onConfirm(text) }) {
-                Text("Set $label")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
 
 @Composable
 fun InfoBox(label: String, value: String, backgroundColor: Color, onClick: (() -> Unit)? = null) {
@@ -303,22 +238,3 @@ fun InfoBox(label: String, value: String, backgroundColor: Color, onClick: (() -
     }
 }
 
-@Composable
-fun WorkoutItem(name: String, details: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFB2DFDB), RoundedCornerShape(8.dp))
-            .padding(16.dp)
-            .clickable { onClick() }
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(details, fontSize = 14.sp, color = Color.Gray)
-        }
-    }
-}
