@@ -22,6 +22,10 @@ class CountdownViewModel(application: Application) : AndroidViewModel(applicatio
         return countdownDao.getCountdownItems()
     }
 
+    suspend fun getCountdownByIdAndDate(id: String, targetDate: String): CountdownEntity? {
+        return countdownDao.getCountdownByIdAndDate(id, targetDate)
+    }
+
     suspend fun upsertCountdown(countdown: CountdownEntity) {
         return countdownDao.upsertCountdown(countdown)
     }
