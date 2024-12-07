@@ -121,7 +121,6 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                     daysLeft = ChronoUnit.DAYS.between(today, LocalDate.parse(item.targetDate, formatter)),
                     description = item.description,
                     repeat = item.repeatOption,
-                    endDate = item.endDate,
                     navController = navController,
                     onDelete = {
                         viewModel.viewModelScope.launch {
@@ -141,7 +140,6 @@ fun CountdownCard(id: String,
                   daysLeft: Long,
                   description: String,
                   repeat: String,
-                  endDate: String?,
                   navController: NavController,
                   onDelete: () -> Unit) {
     val showDialog = remember { mutableStateOf(false) }
@@ -184,8 +182,8 @@ fun CountdownCard(id: String,
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate("nav_add_item/${Uri.encode(id)}/${Uri.encode(description)}" +
-                    "/${Uri.encode(date)}/${Uri.encode(repeat)}/${Uri.encode(endDate)}") }
+            navController.navigate("nav_add_item/${Uri.encode(id)}/" +
+                    "${Uri.encode(description)}/${Uri.encode(date)}/${Uri.encode(repeat)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

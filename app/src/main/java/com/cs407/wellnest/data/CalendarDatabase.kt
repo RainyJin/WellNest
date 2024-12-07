@@ -8,24 +8,19 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-@Entity(tableName = "countdowns", primaryKeys = ["id", "targetDate"])
+@Entity(tableName = "countdowns")
 data class CountdownEntity(
-    val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val targetDate: String,
     val description: String,
-    val repeatOption: String,
-    val endDate: String? = null // only for repeating events
-)
+    val repeatOption: String)
 
 @Dao
 interface CountdownDao {
     @Query("SELECT * FROM countdowns ORDER BY targetDate ASC")
     suspend fun getCountdownItems(): List<CountdownEntity>
 
-    @Query("SELECT * FROM countdowns WHERE id = :id AND targetDate = :targetDate")
-    suspend fun getCountdownByIdAndDate(id: String, targetDate: String): CountdownEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertCountdown(countdown: CountdownEntity)
 
     @Delete
@@ -37,7 +32,14 @@ interface CountdownDao {
     )
 }
 
-@Database(entities = [CountdownEntity::class], version = 5)
+// Migration strategy
+val MIGRATION_1_2 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE your_table ADD COLUMN new_column_name TEXT")
+    }
+}
+
+@Database(entities = [CountdownEntity::class], version = 3)
 abstract class AppDatabase1 : RoomDatabase() {
     abstract fun countdownDao(): CountdownDao
     companion object {
