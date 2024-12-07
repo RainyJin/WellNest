@@ -103,7 +103,7 @@ fun MainScreen() {
             composable("meditation") { MeditationScreen(navController)}
             composable("pet_profile") { PetProfileScreen(navController) }
             composable("help") { HelpScreen(navController) }
-            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}") { AddItemFragment(navController) }
+            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController) }
             composable("privacy") { PrivacyScreen(navController) }
 
             // Editing a todo

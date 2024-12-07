@@ -1,6 +1,8 @@
 package com.cs407.wellnest
 
 import android.app.DatePickerDialog
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons.Default
 import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -32,17 +36,21 @@ import java.util.UUID
 
 @Composable
 fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+    val context = LocalContext.current
+
     val backStackEntry = navController.currentBackStackEntry
     val eventIdArg = backStackEntry?.arguments?.getString("eventId") ?: UUID.randomUUID().toString()
     val eventDescArg = backStackEntry?.arguments?.getString("eventDesc") ?: ""
     val eventDateArg = backStackEntry?.arguments?.getString("eventDate") ?:
         LocalDate.now().format(DateTimeFormatter.ofPattern("M/d/yyyy"))
     val eventRepeatArg = backStackEntry?.arguments?.getString("eventRepeat") ?: "Does not repeat"
+    val eventEndDateArg = backStackEntry?.arguments?.getString("eventEndDate") ?: "Select End Date"
 
     // input field, date picker, and repeat option default texts
     var eventDesc by remember { mutableStateOf(eventDescArg) }
     var eventDate by remember { mutableStateOf(eventDateArg) }
     var eventRepeat by remember { mutableStateOf(eventRepeatArg) }
+    var eventEndDate by remember { mutableStateOf(eventEndDateArg) }
 
     // hardcoded suggestion list
     val suggestions = remember {
@@ -55,13 +63,6 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
 
     // date picker dialog
     val calendar = Calendar.getInstance()
-    val datePickerDialog = DatePickerDialog(
-        navController.context,
-        { _, year, month, day -> eventDate = "${month + 1}/$day/$year" },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    )
 
     Column(
         modifier = Modifier
@@ -110,8 +111,41 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconText(icon = R.drawable.ic_calendar, text = eventDate, onClick = { datePickerDialog.show() })
-                    IconText(icon = R.drawable.ic_repeat, text = eventRepeat, onClick = { expandedDropdown = !expandedDropdown})
+                    IconText(
+                        icon = R.drawable.ic_calendar,
+                        text = eventDate,
+                        onClick = { DatePickerDialog(
+                            navController.context,
+                            { _, year, month, day -> eventDate = "${month + 1}/$day/$year" },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show() }
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        IconText(
+                            icon = R.drawable.ic_repeat,
+                            text = eventRepeat,
+                            onClick = { expandedDropdown = !expandedDropdown}
+                        )
+                        if (eventRepeat != "Does not repeat") {
+                            IconText(
+                                icon = R.drawable.ic_calendar,
+                                text = eventEndDate,
+                                onClick = { DatePickerDialog(
+                                    navController.context,
+                                    { _, year, month, day -> eventEndDate = "${month + 1}/$day/$year" },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                                }
+                            )
+                        }
+                    }
                 }
 
                 // box to overlay the dropdown menu
@@ -142,6 +176,14 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                 // save button
                 Button(
                     onClick = {
+                        // Field checking
+                        if (eventDesc.isBlank() || eventDate.isBlank() ||
+                            (eventRepeat != "Does not repeat" && eventEndDate.isNullOrBlank())) {
+                            Toast.makeText(context, "Please fill in all required fields.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        // Create an countdown item and add
                         val countdown = CountdownEntity(
                             id = eventIdArg,
                             targetDate = LocalDate.parse(
@@ -149,12 +191,30 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                                 DateTimeFormatter.ofPattern("M/d/yyyy")
                             ).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")),
                             description = eventDesc,
-                            repeatOption = eventRepeat
+                            repeatOption = eventRepeat,
+                            endDate = if (eventRepeat != "Does not repeat") eventEndDate else null
                         )
 
-                        viewModel.apply {
-                            viewModelScope.launch {
-                                upsertCountdown(countdown)
+                        if (eventRepeat == "Does not repeat") {
+                            viewModel.apply {
+                                viewModelScope.launch {
+                                    upsertCountdown(countdown)
+                                }
+                            }
+                        } else {
+                            val dates = generateRepeatingDates(countdown)
+                            val repeatingCountdowns = dates.map { date ->
+                                countdown.copy(
+                                    targetDate = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"))
+                                )
+                            }
+                            Log.d("Number of items:", "${repeatingCountdowns.size}")
+                            viewModel.apply {
+                                viewModelScope.launch {
+                                    repeatingCountdowns.forEach { countdown ->
+                                        upsertCountdown(countdown)
+                                    }
+                                }
                             }
                         }
                         navController.popBackStack()
@@ -230,4 +290,22 @@ fun SuggestionItem(text: String, onRemove: () -> Unit) {
             }
         }
     }
+}
+
+fun generateRepeatingDates(countdown: CountdownEntity): List<LocalDate> {
+    val dates = mutableListOf<LocalDate>()
+    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
+    var curr = LocalDate.parse(countdown.targetDate, formatter)
+    val last = LocalDate.parse(countdown.endDate, formatter)
+    while (curr.isBefore(last) || curr.isEqual(last)) {
+        dates.add(curr)
+        curr = when (countdown.repeatOption) {
+            "Daily" -> curr.plusDays(1)
+            "Weekly" -> curr.plusWeeks(1)
+            "Monthly" -> curr.plusMonths(1)
+            "Yearly" -> curr.plusYears(1)
+            else -> break
+        }
+    }
+    return dates
 }
