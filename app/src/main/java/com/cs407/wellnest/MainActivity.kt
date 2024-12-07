@@ -99,9 +99,11 @@ fun MainScreen() {
             composable("nav_about_us") { AboutUsScreen(navController) }
             composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController) }
+
             composable("meditation") { MeditationScreen(navController)}
-            composable("nav_add_item/{eventName}/{eventDate}") { AddItemFragment(navController) }
+            composable("pet_profile") { PetProfileScreen(navController) }
             composable("help") { HelpScreen(navController) }
+            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}") { AddItemFragment(navController) }
             composable("privacy") { PrivacyScreen(navController) }
 
             // Editing a todo
@@ -115,16 +117,16 @@ fun MainScreen() {
             ) { backStackEntry ->
                 val todoId = backStackEntry.arguments?.getString("todoId")
                 val selectedTabIndex = backStackEntry.arguments?.getInt("selectedTabIndex") ?: 0
+
                 val backgroundColorInt = backStackEntry.arguments?.getInt("backgroundColor") ?: 0xFF5BBAE9.toInt()
                 val backgroundColor = Color(backgroundColorInt)
-
+                
                 EditTodoScreen(
                     itemId = todoId,
                     navController = navController,
                     backgroundColor = backgroundColor
                 )
             }
-
         }
     }
 }
