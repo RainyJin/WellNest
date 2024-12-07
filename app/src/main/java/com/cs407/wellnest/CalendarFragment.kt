@@ -123,10 +123,22 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                     repeat = item.repeatOption,
                     endDate = item.endDate,
                     navController = navController,
-                    onDelete = {
-                        viewModel.viewModelScope.launch {
-                            viewModel.deleteCountdown(item)
-                            countdownItems.remove(item)
+                    onDelete = { deleteAll ->
+                        if (deleteAll) {
+                            viewModel.viewModelScope.launch {
+                                // Delete all occurrences of the repeating event
+                                val allOccurrences = countdownItems.filter { it.id == item.id }
+                                allOccurrences.forEach { countdown ->
+                                    viewModel.deleteCountdown(countdown)
+                                }
+                                countdownItems.removeAll(allOccurrences)
+                            }
+                        } else {
+                            // Delete only the current occurrence
+                            viewModel.viewModelScope.launch {
+                                viewModel.deleteCountdown(item)
+                                countdownItems.remove(item)
+                            }
                         }
                     }
                 )
@@ -143,29 +155,33 @@ fun CountdownCard(id: String,
                   repeat: String,
                   endDate: String?,
                   navController: NavController,
-                  onDelete: () -> Unit) {
+                  onDelete: (deleteAll: Boolean) -> Unit) {
     val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = { showDialog.value = false },
             title = { Text(text = "Confirm Deletion") },
-            text = { Text(text = "Do you really want to delete this item?") },
+            text = { Text(text = "Do you want to delete just this event or all occurrences? " +
+                    "You can also click outside the box to cancel.") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete()  // Call onDelete if user confirms
-                        showDialog.value = false  // Close the dialog
+                        onDelete(true)
+                        showDialog.value = false
                     }
                 ) {
-                    Text("Yes")
+                    Text("Delete All")
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDialog.value = false }  // Just close the dialog if dismissed
+                    onClick = {
+                        onDelete(false)
+                        showDialog.value = false
+                    }
                 ) {
-                    Text("No")
+                    Text("Delete Only This")
                 }
             }
         )
@@ -221,7 +237,6 @@ fun CountdownCard(id: String,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-
         }
     }
 }

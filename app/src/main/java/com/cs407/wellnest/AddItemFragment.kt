@@ -195,6 +195,35 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                             endDate = if (eventRepeat != "Does not repeat") eventEndDate else null
                         )
 
+                        viewModel.apply {
+                            viewModelScope.launch {
+                                if (eventRepeat == "Does not repeat") {
+                                    val existingCountdown = viewModel.getCountdownByIdAndDate(
+                                        countdown.id, countdown.targetDate
+                                    )
+                                    if (existingCountdown == null || existingCountdown != countdown) {
+                                        viewModel.upsertCountdown(countdown)
+                                    }
+                                } else {
+                                    val dates = generateRepeatingDates(countdown)
+                                    val repeatingCountdowns = dates.map { date ->
+                                        countdown.copy(
+                                            targetDate = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"))
+                                        )
+                                    }
+
+                                    repeatingCountdowns.forEach { repeatingCountdown ->
+                                        val existingCountdown = viewModel.getCountdownByIdAndDate(
+                                            repeatingCountdown.id, repeatingCountdown.targetDate
+                                        )
+                                        if (existingCountdown == null || existingCountdown != repeatingCountdown) {
+                                            viewModel.upsertCountdown(repeatingCountdown)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (eventRepeat == "Does not repeat") {
                             viewModel.apply {
                                 viewModelScope.launch {
