@@ -186,15 +186,17 @@ fun TimeRangeContent(
 ) {
     var showGymDialog by remember { mutableStateOf(false) }
     var showRunningJoggingDialog by remember { mutableStateOf(false) }
-    var showFoodDialog by remember { mutableStateOf(false) } // Control Food Log dialog visibility
-    var selectedValue by remember { mutableStateOf("") } // Holds the current value being edited
-    var foodLog by remember { mutableStateOf(listOf<String>()) } // List to track food entries
+    var showFoodDialog by remember { mutableStateOf(false) }
+    var showSleepDialog by remember { mutableStateOf(false) }
+    var foodLog by remember { mutableStateOf(listOf<String>()) }
+    var sleepLog by remember { mutableStateOf(listOf<String>()) }
+    var selectedValue by remember { mutableStateOf("") }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Circular Progress at the top
+        // Circular Progress
         item {
             Box(
                 modifier = Modifier
@@ -222,7 +224,7 @@ fun TimeRangeContent(
             }
         }
 
-        // Info Cards (2 per row)
+        // Info Cards
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -233,17 +235,34 @@ fun TimeRangeContent(
             }
         }
 
+        // Distance and Sleep
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 InfoBox("Distance", "$runDistance m", Color(0xFF98FB98))
-                InfoBox("Sleep", "$sleep hours", Color(0xFFD8BFD8))
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFD8BFD8), RoundedCornerShape(8.dp))
+                        .clickable { showSleepDialog = true }
+                        .padding(16.dp)
+                        .width(160.dp)
+                ) {
+                    Column {
+                        Text("Sleep", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (sleepLog.isNotEmpty()) sleepLog.firstOrNull() ?: "$sleep hours" else "$sleep hours",
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
             }
         }
 
-        // Gym Hours with clickable number
+        // Gym Hours
         item {
             Box(
                 modifier = Modifier
@@ -270,10 +289,7 @@ fun TimeRangeContent(
                         )
                     }
                     Row {
-                        Button(
-                            onClick = { onGymHoursChange(gymHours + 0.5f) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
+                        Button(onClick = { onGymHoursChange(gymHours + 0.5f) }) {
                             Text("+0.5")
                         }
                         Button(onClick = { onGymHoursChange(gymHours + 1f) }) {
@@ -284,7 +300,7 @@ fun TimeRangeContent(
             }
         }
 
-        // Running/Jogging with clickable number
+        // Running/Jogging
         item {
             Box(
                 modifier = Modifier
@@ -311,10 +327,7 @@ fun TimeRangeContent(
                         )
                     }
                     Row {
-                        Button(
-                            onClick = { onRunningJoggingChange(runningJogging + 0.5f) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
+                        Button(onClick = { onRunningJoggingChange(runningJogging + 0.5f) }) {
                             Text("+0.5")
                         }
                         Button(onClick = { onRunningJoggingChange(runningJogging + 1f) }) {
@@ -373,17 +386,31 @@ fun TimeRangeContent(
         )
     }
 
-    // Food Log Dialog
+    // Sleep Dialog
+    if (showSleepDialog) {
+        SleepLogDialog(
+            sleepLog = sleepLog,
+            onAddSleep = { newSleep ->
+                sleepLog = listOf(newSleep) + sleepLog
+            },
+            onDismiss = { showSleepDialog = false }
+        )
+    }
+
+    // Food Dialog
     if (showFoodDialog) {
         FoodLogDialog(
             foodLog = foodLog,
             onAddFood = { newFood ->
-                foodLog = listOf(newFood) + foodLog // Add new food to the top of the log
+                foodLog = listOf(newFood) + foodLog
             },
             onDismiss = { showFoodDialog = false }
         )
     }
 }
+
+
+
 
 @Composable
 fun FoodLogDialog(
@@ -534,4 +561,60 @@ fun InfoBox(
             Text(value, fontSize = 18.sp, color = Color.Black)
         }
     }
+}
+
+@Composable
+fun SleepLogDialog(
+    sleepLog: List<String>,
+    onAddSleep: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newSleep by remember { mutableStateOf("") } // State for new sleep entry
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sleep Log") },
+        text = {
+            Column {
+                // Sleep Log List
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp), // Limit the height of the sleep log list
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(sleepLog) { sleep ->
+                        Text(sleep, fontSize = 16.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Input for new sleep
+                TextField(
+                    value = newSleep,
+                    onValueChange = { newSleep = it },
+                    placeholder = { Text("Enter sleep hours") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (newSleep.isNotBlank()) {
+                        onAddSleep(newSleep)
+                        newSleep = "" // Reset input
+                    }
+                }
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
