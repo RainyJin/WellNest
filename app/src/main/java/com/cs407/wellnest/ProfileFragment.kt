@@ -42,6 +42,12 @@ import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+class ProfileViewModel : ViewModel() {
+    val avatarUri: MutableState<String?> = mutableStateOf(null)
+}
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -52,6 +58,7 @@ fun ProfileScreen(navController: NavController) {
 
     // Remember scroll state
     val scrollState = rememberScrollState()
+    val viewModel: ProfileViewModel = viewModel()
 
     // Make the content scrollable by applying a verticalScroll modifier
     Column(
@@ -63,7 +70,7 @@ fun ProfileScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
-        ProfileSection(contentColor)
+        ProfileSection(viewModel , contentColor)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -78,13 +85,11 @@ fun ProfileScreen(navController: NavController) {
     }
 }
 
-
 @Composable
-fun ProfileSection(contentColor: Color) {
-    // State to hold the selected avatar URI
-    val avatarUri = remember { mutableStateOf<String?>(null) }
+fun ProfileSection(viewModel: ProfileViewModel = viewModel(), contentColor: Color) {
+    // Use the avatar URI from ViewModel
+    val avatarUri = viewModel.avatarUri
 
-    // Launcher for selecting an image
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -97,7 +102,6 @@ fun ProfileSection(contentColor: Color) {
             .size(100.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
-        // Use rememberAsyncImagePainter inside the composable context
         val painter = if (avatarUri.value != null) {
             rememberAsyncImagePainter(avatarUri.value)
         } else {
@@ -122,7 +126,6 @@ fun ProfileSection(contentColor: Color) {
             )
         }
 
-        // Plus button to open file picker
         IconButton(
             onClick = { launcher.launch("image/*") },
             modifier = Modifier
@@ -141,13 +144,13 @@ fun ProfileSection(contentColor: Color) {
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    // User name text
     Text(
         text = "Bucky",
         fontSize = 24.sp,
         color = contentColor
     )
 }
+
 
 @Composable
 fun SettingsSection(
