@@ -41,22 +41,23 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     LaunchedEffect(Unit) {
         viewModel.deleteExpiredCountdown()
+        countdownItems.clear()
         countdownItems.addAll(viewModel.getCountdownItems())
     }
-
 
     // Get today's date
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
     // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
     val calendarDays = countdownItems.map { item ->
         val parsedDate = LocalDate.parse(item.targetDate, formatter)
-        val calendar = Calendar.getInstance().apply {
+        val calendarDay = Calendar.getInstance().apply {
             set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+
         }
-        CalendarDay(calendar).apply {
+        CalendarDay(calendarDay).apply {
             backgroundResource = R.drawable.ic_target_date
         }
     }
@@ -64,7 +65,6 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     Column(
         modifier = Modifier
             .fillMaxSize()
-
     ) {
         AndroidView(
             // calendar
