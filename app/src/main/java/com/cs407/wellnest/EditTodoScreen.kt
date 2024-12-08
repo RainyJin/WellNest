@@ -344,10 +344,10 @@ fun EditTodoScreen(itemId: String?,
         Text("Suggestions", fontSize = 20.sp, color = Color.Black)
 
         val suggestions = listOf(
-            "Send 1 job application",
+            "Final Project Presentation",
             "Complete Zybooks Chapter 7",
             "Complete Zybooks Chapter 8",
-            "Search for 1 grad school"
+            "Final Project Demo"
         )
 
         LazyColumn(
@@ -356,7 +356,14 @@ fun EditTodoScreen(itemId: String?,
                 .padding(6.dp)
         ) {
             items(suggestions) { suggestion ->
-                SuggestionItem(suggestion, suggestionColor)
+                SuggestionItem(
+                    suggestion = suggestion,
+                    backgroundColor = suggestionColor,
+                    onClickSuggestion = {
+                        // Clear previous text and add new suggestion
+                        descriptionText = TextFieldValue(suggestion)
+                    }
+                )
             }
         }
 
@@ -370,18 +377,23 @@ fun getCurrentDate(): String {
 }
 
 @Composable
-fun SuggestionItem(suggestion: String, backgroundColor: Color) {
+fun SuggestionItem(
+    suggestion: String,
+    backgroundColor: Color,
+    onClickSuggestion: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(6.dp)
             .background(backgroundColor, MaterialTheme.shapes.medium)
+            .clickable { onClickSuggestion() } // Add clickable modifier
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(suggestion, fontSize = 16.sp, color = Color.Black)
-        IconButton(onClick = { /* Remove suggestion */ }) {
+        IconButton(onClick = { /* Optional: remove suggestion functionality */ }) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Remove",
