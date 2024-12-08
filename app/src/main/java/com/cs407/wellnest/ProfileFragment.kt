@@ -193,7 +193,7 @@ fun SettingsSection(
         )
 
         // Dark Mode Toggle
-        DarkModeToggle(isDarkMode)
+       // DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -342,22 +342,22 @@ fun NotificationPreferenceItem(title: String, isDarkMode: Boolean) {
     }
 }
 
-@Composable
-fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "Dark Mode", color = if (isDarkMode.value) Color.White else Color.Black)
-        Switch(
-            checked = isDarkMode.value,
-            onCheckedChange = { isDarkMode.value = it }
-        )
-    }
-}
+//@Composable
+//fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(vertical = 4.dp),
+//        verticalAlignment = Alignment.CenterVertically,
+//        horizontalArrangement = Arrangement.SpaceBetween
+//    ) {
+//        Text(text = "Dark Mode", color = if (isDarkMode.value) Color.White else Color.Black)
+//        Switch(
+//            checked = isDarkMode.value,
+//            onCheckedChange = { isDarkMode.value = it }
+//        )
+//    }
+//}
 
 @Composable
 fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick: () -> Unit) {
@@ -368,7 +368,7 @@ fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onH
         rememberVectorPainter(image = Icons.Default.Lock),
         painterResource(id = R.drawable.icon_comment),
 
-    )
+        )
 
 
     Column {
