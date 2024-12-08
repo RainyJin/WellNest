@@ -49,6 +49,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppDatabase.getDatabase(this)
@@ -75,6 +81,9 @@ class MainActivity : ComponentActivity() {
 
         // Initialize NotificationHelper
         NotificationHelper(this).createNotificationChannel()
+
+        // Request location permission
+        requestLocationPermission()
     }
 }
 
