@@ -43,7 +43,7 @@ fun StartScreen(navController: NavController) {
 
             Text(
                 text = "WellNest",
-                fontSize = 24.sp,
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Bold
             )
 
