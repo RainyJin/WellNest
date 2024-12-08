@@ -132,10 +132,10 @@ fun StatisticsScreen() {
                 onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
             )
             1 -> TimeRangeContent(
-                steps = weekSteps,
-                calories = weekCalories.toInt(),
-                sleep = sleepHours * 7,
-                runDistance = weekDistance.toInt(),
+                steps = 49564,
+                calories = 22450,
+                sleep = 42,
+                runDistance = 48095,
                 gymHours = gymHours * 7,
                 runningJogging = runningJogging * 7,
                 foodConsumed = "14,000 kcal",
@@ -145,10 +145,10 @@ fun StatisticsScreen() {
                 onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
             )
             2 -> TimeRangeContent(
-                steps = monthSteps,
-                calories = monthCalories.toInt(),
-                sleep = sleepHours * 30,
-                runDistance = monthDistance.toInt(),
+                steps = 49564,
+                calories = 22450,
+                sleep = 42,
+                runDistance = 48095,
                 gymHours = gymHours * 30,
                 runningJogging = runningJogging * 30,
                 foodConsumed = "60,000 kcal",
