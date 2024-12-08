@@ -143,10 +143,19 @@ val birdData = mapOf(
     )
 )
 
+val messages = listOf(
+    Message("", "")
+)
+
 data class BirdData(
     val description: String,
     val lat1: Double,
     val lat2: Double,
     val lon1: Double,
     val lon2: Double
+)
+
+data class Message(
+    val category: String,
+    val message: String
 )

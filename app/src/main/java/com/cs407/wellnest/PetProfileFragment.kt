@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Looper
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.foundation.background
@@ -30,8 +31,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.cs407.wellnest.data.birdData
@@ -39,6 +44,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 @SuppressLint("ServiceCast")
 @Composable
@@ -108,8 +114,8 @@ fun PetProfileScreen(navController: NavController) {
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(
                 onClick = { navController.popBackStack() }
@@ -120,34 +126,28 @@ fun PetProfileScreen(navController: NavController) {
                     tint = Color.Black
                 )
             }
-            // Speech bubble section
+
+            // Speech bubble
             Box(
                 modifier = Modifier
                     .width(300.dp)
                     .padding(16.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.LightGray)
+                    .background(Color(0xFFE8F5E9))
                     .padding(16.dp)
-                    .align(Alignment.Bottom)
             ) {
-                Text(text = "How are you today?", fontSize = 18.sp)
+                Text(text = "How are you today?", fontSize = 18.sp, color = Color(0xFF4CAF50))
             }
         }
 
-        // Pet placeholder
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.bird_img),
+            contentDescription = "Bird Image",
             modifier = Modifier
-                .height(200.dp)
-                .width(200.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.LightGray)
-                .padding(16.dp)
+                .height(250.dp)
+                .width(250.dp)
                 .align(Alignment.Start)
-        ) {
-            Text(text = "Pet Placeholder")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        )
 
         // Icon buttons section
         Row(
@@ -199,7 +199,7 @@ fun PetProfileScreen(navController: NavController) {
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Profile Details
         Column(
