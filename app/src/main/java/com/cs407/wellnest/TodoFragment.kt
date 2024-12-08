@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -124,6 +125,8 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                     // If not playing, start the third animation
                     playAnimation(
                         animationIndex = 2,
+                        loop = false
+
                     )
                 }
             }
@@ -167,6 +170,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                     .fillMaxWidth()
                     .height(300.dp) // Control the height of the 3D scene
                     .background(Color.White)
+                    .clip(RoundedCornerShape(16.dp))
             ) {
                 if (environment != null) {
                     Scene(
@@ -216,7 +220,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                                 todo = todo,
                                 onCheckChanged = { isCompleted ->
                                     scope.launch {
-                                        viewModel.updateTodoCompletion(todo.id, isCompleted)
+                                        viewModel.completeTodo(todo)
                                     }
                                 },
                                 onClick = {
@@ -430,7 +434,7 @@ fun expandRecurringTodos(todos: List<TodoEntity>, datesRange: List<LocalDate>): 
             }
             "Weekly" -> {
                 datesRange.forEach { date ->
-                    if (date >= originalDate && ChronoUnit.WEEKS.between(originalDate, date) % 1 == 0L) {
+                    if (date >= originalDate && ChronoUnit.DAYS.between(originalDate, date) % 7 == 0L) {
                         expandedTodos[date]?.add(todo)
                     }
                 }

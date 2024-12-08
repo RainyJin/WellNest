@@ -103,6 +103,8 @@ fun EditTodoScreen(itemId: String?,
         else -> Color.Black to Color.Gray // Default fallback
     }
 
+    var showTitleError by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -186,9 +188,27 @@ fun EditTodoScreen(itemId: String?,
 
                     OutlinedTextField(
                         value = goalText,
-                        onValueChange = { goalText = it },
-                        label = { Text("Course") },
-                        modifier = Modifier.weight(1f)
+                        onValueChange = {
+                            goalText = it
+                            showTitleError = false // Reset error when user starts typing
+                        },
+                        label = { Text("Title") },
+                        modifier = Modifier.weight(1f),
+                        isError = showTitleError, // This will trigger the error state
+                        supportingText = {
+                            if (showTitleError) {
+                                Text(
+                                    text = "Title is required",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        // Optional: Customize the border color and outline when in error state
+                        colors = OutlinedTextFieldDefaults.colors(
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                            errorLabelColor = MaterialTheme.colorScheme.error,
+                            errorCursorColor = MaterialTheme.colorScheme.error
+                        )
                     )
                 }
 
@@ -288,6 +308,12 @@ fun EditTodoScreen(itemId: String?,
                 Spacer(modifier = Modifier.height(16.dp)) // Add space before the save button
                 Button(
                     onClick = {
+                        if (goalText.text.isBlank()) {
+                            showTitleError = true
+                            return@Button
+                        }
+                        showTitleError = false
+
                         scope.launch {
                             val todo = TodoEntity(
                                 id = if (itemId != null && itemId != "new") itemId else UUID.randomUUID().toString(),
@@ -318,10 +344,10 @@ fun EditTodoScreen(itemId: String?,
         Text("Suggestions", fontSize = 20.sp, color = Color.Black)
 
         val suggestions = listOf(
-            "Send 1 job application",
+            "Final Project Presentation",
             "Complete Zybooks Chapter 7",
             "Complete Zybooks Chapter 8",
-            "Search for 1 grad school"
+            "Final Project Demo"
         )
 
         LazyColumn(
@@ -330,7 +356,14 @@ fun EditTodoScreen(itemId: String?,
                 .padding(6.dp)
         ) {
             items(suggestions) { suggestion ->
-                SuggestionItem(suggestion, suggestionColor)
+                SuggestionItem(
+                    suggestion = suggestion,
+                    backgroundColor = suggestionColor,
+                    onClickSuggestion = {
+                        // Clear previous text and add new suggestion
+                        descriptionText = TextFieldValue(suggestion)
+                    }
+                )
             }
         }
 
@@ -344,18 +377,23 @@ fun getCurrentDate(): String {
 }
 
 @Composable
-fun SuggestionItem(suggestion: String, backgroundColor: Color) {
+fun SuggestionItem(
+    suggestion: String,
+    backgroundColor: Color,
+    onClickSuggestion: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(6.dp)
             .background(backgroundColor, MaterialTheme.shapes.medium)
+            .clickable { onClickSuggestion() } // Add clickable modifier
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(suggestion, fontSize = 16.sp, color = Color.Black)
-        IconButton(onClick = { /* Remove suggestion */ }) {
+        IconButton(onClick = { /* Optional: remove suggestion functionality */ }) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Remove",
