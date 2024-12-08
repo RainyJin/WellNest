@@ -41,22 +41,23 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     LaunchedEffect(Unit) {
         viewModel.deleteExpiredCountdown()
+        countdownItems.clear()
         countdownItems.addAll(viewModel.getCountdownItems())
     }
-
 
     // Get today's date
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
     // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
     val calendarDays = countdownItems.map { item ->
         val parsedDate = LocalDate.parse(item.targetDate, formatter)
-        val calendar = Calendar.getInstance().apply {
+        val calendarDay = Calendar.getInstance().apply {
             set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+
         }
-        CalendarDay(calendar).apply {
+        CalendarDay(calendarDay).apply {
             backgroundResource = R.drawable.ic_target_date
         }
     }
@@ -64,7 +65,6 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     Column(
         modifier = Modifier
             .fillMaxSize()
-
     ) {
         AndroidView(
             // calendar
@@ -121,11 +121,24 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                     daysLeft = ChronoUnit.DAYS.between(today, LocalDate.parse(item.targetDate, formatter)),
                     description = item.description,
                     repeat = item.repeatOption,
+                    endDate = item.endDate,
                     navController = navController,
-                    onDelete = {
-                        viewModel.viewModelScope.launch {
-                            viewModel.deleteCountdown(item)
-                            countdownItems.remove(item)
+                    onDelete = { deleteAll ->
+                        if (deleteAll) {
+                            viewModel.viewModelScope.launch {
+                                // Delete all occurrences of the repeating event
+                                val allOccurrences = countdownItems.filter { it.id == item.id }
+                                allOccurrences.forEach { countdown ->
+                                    viewModel.deleteCountdown(countdown)
+                                }
+                                countdownItems.removeAll(allOccurrences)
+                            }
+                        } else {
+                            // Delete only the current occurrence
+                            viewModel.viewModelScope.launch {
+                                viewModel.deleteCountdown(item)
+                                countdownItems.remove(item)
+                            }
                         }
                     }
                 )
@@ -140,30 +153,35 @@ fun CountdownCard(id: String,
                   daysLeft: Long,
                   description: String,
                   repeat: String,
+                  endDate: String?,
                   navController: NavController,
-                  onDelete: () -> Unit) {
+                  onDelete: (deleteAll: Boolean) -> Unit) {
     val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = { showDialog.value = false },
             title = { Text(text = "Confirm Deletion") },
-            text = { Text(text = "Do you really want to delete this item?") },
+            text = { Text(text = "Do you want to delete just this event or all occurrences? " +
+                    "You can also click outside the box to cancel.") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete()  // Call onDelete if user confirms
-                        showDialog.value = false  // Close the dialog
+                        onDelete(true)
+                        showDialog.value = false
                     }
                 ) {
-                    Text("Yes")
+                    Text("Delete All")
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDialog.value = false }  // Just close the dialog if dismissed
+                    onClick = {
+                        onDelete(false)
+                        showDialog.value = false
+                    }
                 ) {
-                    Text("No")
+                    Text("Delete Only This")
                 }
             }
         )
@@ -182,8 +200,8 @@ fun CountdownCard(id: String,
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate("nav_add_item/${Uri.encode(id)}/" +
-                    "${Uri.encode(description)}/${Uri.encode(date)}/${Uri.encode(repeat)}") }
+            navController.navigate("nav_add_item/${Uri.encode(id)}/${Uri.encode(description)}" +
+                    "/${Uri.encode(date)}/${Uri.encode(repeat)}/${Uri.encode(endDate)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -219,7 +237,6 @@ fun CountdownCard(id: String,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-
         }
     }
 }
