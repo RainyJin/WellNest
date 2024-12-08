@@ -120,7 +120,7 @@ fun MainScreen() {
 
                 val backgroundColorInt = backStackEntry.arguments?.getInt("backgroundColor") ?: 0xFF5BBAE9.toInt()
                 val backgroundColor = Color(backgroundColorInt)
-                
+
                 EditTodoScreen(
                     itemId = todoId,
                     navController = navController,
