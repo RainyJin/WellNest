@@ -1,7 +1,6 @@
 package com.cs407.wellnest
 
 import android.app.DatePickerDialog
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +52,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
 
     // hardcoded suggestion list
     val suggestions = remember {
-        mutableStateListOf("Birthday", "Folklore 100 Final", "School Starts")
+        mutableStateListOf("Birthday", "New Year", "School Starts")
     }
 
     // dropdown menu
@@ -115,7 +114,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                         text = eventDate,
                         onClick = { DatePickerDialog(
                             navController.context,
-                            { _, year, month, day -> eventDate = "${month + 1}/$day/$year" },
+                            { _, year, month, day -> eventDate = "$year/${month + 1}/$day" },
                             calendar.get(Calendar.YEAR),
                             calendar.get(Calendar.MONTH),
                             calendar.get(Calendar.DAY_OF_MONTH)
@@ -136,7 +135,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                                 text = eventEndDate,
                                 onClick = { DatePickerDialog(
                                     navController.context,
-                                    { _, year, month, day -> eventEndDate = "${month + 1}/$day/$year" },
+                                    { _, year, month, day -> eventEndDate = "$year/${month + 1}/$day" },
                                     calendar.get(Calendar.YEAR),
                                     calendar.get(Calendar.MONTH),
                                     calendar.get(Calendar.DAY_OF_MONTH)
@@ -177,7 +176,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                     onClick = {
                         // Field checking
                         if (eventDesc.isBlank() || eventDate.isBlank() ||
-                            (eventRepeat != "Does not repeat" && eventEndDate.isNullOrBlank())) {
+                            (eventRepeat != "Does not repeat" && eventEndDate.isBlank())) {
                             Toast.makeText(context, "Please fill in all required fields.", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -187,65 +186,35 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                             id = eventIdArg,
                             targetDate = LocalDate.parse(
                                 eventDate,
-                                DateTimeFormatter.ofPattern("M/d/yyyy")
+                                DateTimeFormatter.ofPattern("yyyy/M/d")
                             ).format(DateTimeFormatter.ofPattern("yyyy/MM/dd")),
                             description = eventDesc,
                             repeatOption = eventRepeat,
-                            endDate = if (eventRepeat != "Does not repeat") eventEndDate else null
+                            endDate = if (eventRepeat != "Does not repeat") LocalDate.parse(
+                                eventEndDate,
+                                DateTimeFormatter.ofPattern("yyyy/M/d")
+                            ).format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) else null
                         )
 
                         viewModel.apply {
                             viewModelScope.launch {
                                 if (eventRepeat == "Does not repeat") {
                                     viewModel.upsertCountdown(countdown)
-//                                    val existingCountdown = viewModel.getCountdownByIdAndDate(
-//                                        countdown.id, countdown.targetDate
-//                                    )
-//                                    if (existingCountdown == null || existingCountdown != countdown) {
-//                                        viewModel.upsertCountdown(countdown)
-//                                    }
                                 } else {
                                     val dates = generateRepeatingDates(countdown)
                                     val repeatingCountdowns = dates.map { date ->
                                         countdown.copy(
-                                            targetDate = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"))
+                                            targetDate = date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
                                         )
                                     }
 
                                     repeatingCountdowns.forEach { repeatingCountdown ->
-                                        val existingCountdown = viewModel.getCountdownByIdAndDate(
-                                            repeatingCountdown.id, repeatingCountdown.targetDate
-                                        )
-                                        if (existingCountdown == null || existingCountdown != repeatingCountdown) {
-                                            viewModel.upsertCountdown(repeatingCountdown)
-                                        }
+                                        viewModel.upsertCountdown(repeatingCountdown)
                                     }
                                 }
                             }
                         }
 
-                        if (eventRepeat == "Does not repeat") {
-                            viewModel.apply {
-                                viewModelScope.launch {
-                                    upsertCountdown(countdown)
-                                }
-                            }
-                        } else {
-                            val dates = generateRepeatingDates(countdown)
-                            val repeatingCountdowns = dates.map { date ->
-                                countdown.copy(
-                                    targetDate = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"))
-                                )
-                            }
-                            Log.d("Number of items:", "${repeatingCountdowns.size}")
-                            viewModel.apply {
-                                viewModelScope.launch {
-                                    repeatingCountdowns.forEach { countdown ->
-                                        upsertCountdown(countdown)
-                                    }
-                                }
-                            }
-                        }
                         navController.popBackStack()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MidPink),
@@ -323,7 +292,7 @@ fun SuggestionItem(text: String, onRemove: () -> Unit) {
 
 fun generateRepeatingDates(countdown: CountdownEntity): List<LocalDate> {
     val dates = mutableListOf<LocalDate>()
-    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
     var curr = LocalDate.parse(countdown.targetDate, formatter)
     val last = LocalDate.parse(countdown.endDate, formatter)
     while (curr.isBefore(last) || curr.isEqual(last)) {
