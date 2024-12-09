@@ -101,6 +101,9 @@ dependencies {
 
     implementation ("androidx.compose.material3:material3:1.3.1")
 
+    implementation ("androidx.compose.material3:material3:1.2.0-alpha08")
+    implementation ("androidx.compose.ui:ui:1.5.0")
+
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidx.room.runtime)
