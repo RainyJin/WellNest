@@ -203,7 +203,6 @@ fun EditTodoScreen(itemId: String?,
                                 )
                             }
                         },
-                        // Optional: Customize the border color and outline when in error state
                         colors = OutlinedTextFieldDefaults.colors(
                             errorBorderColor = MaterialTheme.colorScheme.error,
                             errorLabelColor = MaterialTheme.colorScheme.error,
@@ -234,7 +233,7 @@ fun EditTodoScreen(itemId: String?,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_calendar), // Replace with your calendar icon resource
+                            painter = painterResource(id = R.drawable.ic_calendar),
                             contentDescription = "Calendar",
                             tint = Color.Black,
                             modifier = Modifier.size(24.dp)
@@ -246,7 +245,7 @@ fun EditTodoScreen(itemId: String?,
                             color = Color.Black,
                             modifier = Modifier
                                 .clickable { datePickerDialog.show() }
-                                .padding(8.dp) // Optional padding for better touch interaction
+                                .padding(8.dp)
                         )
                     }
 
@@ -263,7 +262,7 @@ fun EditTodoScreen(itemId: String?,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_calendar), // Replace with your calendar icon resource
+                            painter = painterResource(id = R.drawable.ic_calendar),
                             contentDescription = "Calendar",
                             tint = Color.Black,
                             modifier = Modifier.size(24.dp)
@@ -276,7 +275,7 @@ fun EditTodoScreen(itemId: String?,
                             color = Color.Black,
                             modifier = Modifier
                                 .clickable { expandedDropdown = !expandedDropdown }
-                                .padding(8.dp) // Optional padding for better touch interaction
+                                .padding(8.dp)
                         )
                     }
                 }
@@ -372,7 +371,7 @@ fun EditTodoScreen(itemId: String?,
 
 fun getCurrentDate(): String {
     val calendar = Calendar.getInstance()
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) // Change format as needed
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     return dateFormat.format(calendar.time)
 }
 
@@ -387,13 +386,13 @@ fun SuggestionItem(
             .fillMaxWidth()
             .padding(6.dp)
             .background(backgroundColor, MaterialTheme.shapes.medium)
-            .clickable { onClickSuggestion() } // Add clickable modifier
+            .clickable { onClickSuggestion() }
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(suggestion, fontSize = 16.sp, color = Color.Black)
-        IconButton(onClick = { /* Optional: remove suggestion functionality */ }) {
+        IconButton(onClick = {}) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Remove",
