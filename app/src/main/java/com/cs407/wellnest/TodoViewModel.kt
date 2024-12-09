@@ -69,7 +69,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         saveTodo(newTodo)
     }
 
-    // Helper method to generate a unique ID (you might want to implement this differently)
+    // Helper method to generate a unique ID
     private fun generateUniqueId(): String {
         return java.util.UUID.randomUUID().toString()
     }

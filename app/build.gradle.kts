@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp") version "1.9.0-1.0.13"
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -69,6 +70,7 @@ dependencies {
     implementation(libs.androidx.room.ktx) // Using calendar view for calendar
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.common)
+    implementation(libs.play.services.location)
     annotationProcessor(libs.androidx.room.compiler) // Only if you're using annotation processing in Java
     ksp(libs.androidx.room.compiler)                // For Kotlin Symbol Processing (recommended for Kotlin)
     implementation(libs.androidx.room.ktx)
@@ -96,7 +98,9 @@ dependencies {
     implementation ("androidx.media3:media3-exoplayer:1.0.0")
     implementation("com.google.android.gms:play-services-fitness:21.0.1")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+
     implementation ("androidx.compose.material3:material3:1.3.1")
+
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidx.room.runtime)
