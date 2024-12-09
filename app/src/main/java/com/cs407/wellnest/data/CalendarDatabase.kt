@@ -6,9 +6,9 @@ import androidx.room.RoomDatabase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-@Entity(tableName = "countdowns")
+@Entity(tableName = "countdowns", primaryKeys = ["id", "targetDate"])
 data class CountdownEntity(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID().toString(),
     val targetDate: String,
     val description: String,
     val repeatOption: String,
@@ -23,8 +23,11 @@ interface CountdownDao {
     @Query("SELECT * FROM countdowns WHERE id = :id AND targetDate = :targetDate")
     suspend fun getCountdownByIdAndDate(id: String, targetDate: String): CountdownEntity?
 
-    @Upsert
-    suspend fun upsertCountdown(countdown: CountdownEntity)
+    @Insert(onConflict = OnConflictStrategy.NONE)
+    suspend fun insertCountdown(countdown: CountdownEntity)
+
+    @Update
+    suspend fun updateCountdown(countdown: CountdownEntity)
 
     @Delete
     suspend fun deleteCountdown(countdown: CountdownEntity)
@@ -35,7 +38,7 @@ interface CountdownDao {
     )
 }
 
-@Database(entities = [CountdownEntity::class], version = 6)
+@Database(entities = [CountdownEntity::class], version = 7)
 abstract class AppDatabase1 : RoomDatabase() {
     abstract fun countdownDao(): CountdownDao
     companion object {

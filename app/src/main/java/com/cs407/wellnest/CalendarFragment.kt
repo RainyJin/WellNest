@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     LaunchedEffect(Unit) {
-        viewModel.deleteExpiredCountdown()
+        //viewModel.deleteExpiredCountdown()
         countdownItems.clear()
         countdownItems.addAll(viewModel.getCountdownItems())
     }
