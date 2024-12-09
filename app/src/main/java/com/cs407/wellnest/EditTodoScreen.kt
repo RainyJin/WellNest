@@ -104,6 +104,13 @@ fun EditTodoScreen(itemId: String?,
         else -> Color.Black to Color.Gray // Default fallback
     }
 
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val hintColor = if (isDarkMode.value) Color.LightGray else Color.Gray
+    val buttonColor = if (isDarkMode.value) Color(0xFF1E88E5) else Color(0xFFBBDEFB)
+    val suggestionBackgroundColor = if (isDarkMode.value) Color(0xFF424242) else suggestionColor
+
     var showTitleError by remember { mutableStateOf(false) }
 
     Column(
@@ -118,7 +125,7 @@ fun EditTodoScreen(itemId: String?,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 32.dp, horizontal = 12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = cardColor)
         ) {
             Column(
                 modifier = Modifier
@@ -196,6 +203,7 @@ fun EditTodoScreen(itemId: String?,
                         label = { Text("Title") },
                         modifier = Modifier.weight(1f),
                         isError = showTitleError, // This will trigger the error state
+
                         supportingText = {
                             if (showTitleError) {
                                 Text(
@@ -205,9 +213,12 @@ fun EditTodoScreen(itemId: String?,
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = textColor,
+                            unfocusedBorderColor = hintColor,
                             errorBorderColor = MaterialTheme.colorScheme.error,
-                            errorLabelColor = MaterialTheme.colorScheme.error,
-                            errorCursorColor = MaterialTheme.colorScheme.error
+                            cursorColor = textColor
                         )
                     )
                 }
@@ -236,14 +247,14 @@ fun EditTodoScreen(itemId: String?,
                         Icon(
                             painter = painterResource(id = R.drawable.ic_calendar),
                             contentDescription = "Calendar",
-                            tint = Color.Black,
+                            tint = textColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = selectedDate,
                             fontSize = 16.sp,
-                            color = Color.Black,
+                            color = textColor,
                             modifier = Modifier
                                 .clickable { datePickerDialog.show() }
                                 .padding(8.dp)
@@ -331,9 +342,9 @@ fun EditTodoScreen(itemId: String?,
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = saveButtonColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                 ) {
-                    Text("Save", fontSize = 16.sp)
+                    Text("Save", fontSize = 16.sp,  color = textColor)
                 }
             }
         }
@@ -358,7 +369,8 @@ fun EditTodoScreen(itemId: String?,
             items(suggestions) { suggestion ->
                 SuggestionItem(
                     suggestion = suggestion,
-                    backgroundColor = suggestionColor,
+                    backgroundColor = suggestionBackgroundColor,
+                    textColor = textColor,
                     onClickSuggestion = {
                         // Clear previous text and add new suggestion
                         descriptionText = TextFieldValue(suggestion)
@@ -380,6 +392,7 @@ fun getCurrentDate(): String {
 fun SuggestionItem(
     suggestion: String,
     backgroundColor: Color,
+    textColor: Color,
     onClickSuggestion: () -> Unit
 ) {
     Row(
@@ -397,7 +410,7 @@ fun SuggestionItem(
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Remove",
-                tint = Color.Black
+                tint = textColor
             )
         }
     }
@@ -407,4 +420,3 @@ data class ColorOption(
     val color: Color,
     val name: String
 )
-
