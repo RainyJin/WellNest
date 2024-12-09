@@ -188,7 +188,7 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                             targetDate = LocalDate.parse(
                                 eventDate,
                                 DateTimeFormatter.ofPattern("M/d/yyyy")
-                            ).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")),
+                            ).format(DateTimeFormatter.ofPattern("yyyy/MM/dd")),
                             description = eventDesc,
                             repeatOption = eventRepeat,
                             endDate = if (eventRepeat != "Does not repeat") eventEndDate else null
@@ -197,12 +197,13 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                         viewModel.apply {
                             viewModelScope.launch {
                                 if (eventRepeat == "Does not repeat") {
-                                    val existingCountdown = viewModel.getCountdownByIdAndDate(
-                                        countdown.id, countdown.targetDate
-                                    )
-                                    if (existingCountdown == null || existingCountdown != countdown) {
-                                        viewModel.upsertCountdown(countdown)
-                                    }
+                                    viewModel.upsertCountdown(countdown)
+//                                    val existingCountdown = viewModel.getCountdownByIdAndDate(
+//                                        countdown.id, countdown.targetDate
+//                                    )
+//                                    if (existingCountdown == null || existingCountdown != countdown) {
+//                                        viewModel.upsertCountdown(countdown)
+//                                    }
                                 } else {
                                     val dates = generateRepeatingDates(countdown)
                                     val repeatingCountdowns = dates.map { date ->

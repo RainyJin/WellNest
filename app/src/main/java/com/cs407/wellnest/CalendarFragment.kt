@@ -50,7 +50,7 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
     // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
     val calendarDays = countdownItems.map { item ->
         val parsedDate = LocalDate.parse(item.targetDate, formatter)
         val calendarDay = Calendar.getInstance().apply {

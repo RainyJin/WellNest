@@ -3,14 +3,12 @@ package com.cs407.wellnest.data
 import java.time.LocalDate
 import androidx.room.*
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-@Entity(tableName = "countdowns", primaryKeys = ["id", "targetDate"])
+@Entity(tableName = "countdowns")
 data class CountdownEntity(
-    val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val targetDate: String,
     val description: String,
     val repeatOption: String,
@@ -25,7 +23,7 @@ interface CountdownDao {
     @Query("SELECT * FROM countdowns WHERE id = :id AND targetDate = :targetDate")
     suspend fun getCountdownByIdAndDate(id: String, targetDate: String): CountdownEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertCountdown(countdown: CountdownEntity)
 
     @Delete
@@ -33,11 +31,11 @@ interface CountdownDao {
 
     @Query("DELETE FROM countdowns WHERE targetDate < :today")
     suspend fun deleteExpiredCountdown(
-        today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+        today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
     )
 }
 
-@Database(entities = [CountdownEntity::class], version = 4)
+@Database(entities = [CountdownEntity::class], version = 6)
 abstract class AppDatabase1 : RoomDatabase() {
     abstract fun countdownDao(): CountdownDao
     companion object {
