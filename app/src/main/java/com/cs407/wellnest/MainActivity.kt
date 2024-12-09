@@ -110,8 +110,8 @@ fun MainScreen() {
             composable("nav_add_item") { AddItemFragment(navController) }
             composable("survey") { SurveyScreen(navController, isDarkMode) }
 
-            composable("meditation") { MeditationScreen(navController)}
-            composable("pet_profile") { PetProfileScreen(navController) }
+            composable("meditation") { MeditationScreen(navController, isDarkMode)}
+            composable("pet_profile") { PetProfileScreen(navController, isDarkMode) }
 
             composable("help") { HelpScreen(navController, isDarkMode) }
             composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController) }
