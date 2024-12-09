@@ -34,7 +34,7 @@ import java.util.Calendar
 import java.util.UUID
 
 @Composable
-fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel = viewModel()) {
     val context = LocalContext.current
 
     val backStackEntry = navController.currentBackStackEntry
@@ -216,7 +216,10 @@ fun AddItemFragment(navController: NavController, viewModel: CountdownViewModel 
                             viewModelScope.launch {
                                 if (eventRepeat == "Does not repeat") {
                                     if (eventIdArg == null) viewModel.insertCountdown(countdown)
-                                    else viewModel.updateCountdown(countdown)
+                                    else {
+                                        viewModel.deleteCountdown(eventIdArg)
+                                        viewModel.insertCountdown(countdown)
+                                    }
                                 } else {
                                     val dates = generateRepeatingDates(countdown)
                                     dates.forEach { date ->

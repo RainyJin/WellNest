@@ -5,9 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cs407.wellnest.data.AppDatabase1
 import com.cs407.wellnest.data.CountdownEntity
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class CountdownViewModel(application: Application) : AndroidViewModel(application) {
+class CalendarViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase1.getDatabase(application)
     private val countdownDao = database.countdownDao()
 
@@ -16,6 +17,10 @@ class CountdownViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             deleteExpiredCountdown()
         }
+    }
+
+    fun getCountdownItemsFlow(): Flow<List<CountdownEntity>> {
+        return countdownDao.getCountdownItemsFlow()
     }
 
     suspend fun getCountdownItems(): List<CountdownEntity> {
@@ -34,8 +39,8 @@ class CountdownViewModel(application: Application) : AndroidViewModel(applicatio
         return countdownDao.updateCountdown(countdown)
     }
 
-    suspend fun deleteCountdown(countdown: CountdownEntity) {
-        return countdownDao.deleteCountdown(countdown)
+    suspend fun deleteCountdown(id: String) {
+        return countdownDao.deleteCountdown(id)
     }
 
     suspend fun deleteExpiredCountdown() {
