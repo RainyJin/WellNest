@@ -1,5 +1,6 @@
 package com.cs407.wellnest
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,38 +14,59 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.OutlinedTextField
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SurveyScreen(navController: NavController) {
+fun SurveyScreen(navController: NavController, isDarkMode: MutableState<Boolean>) {
     // State to track if feedback is submitted
     var isFeedbackSubmitted by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (isFeedbackSubmitted) "Thank You" else "Feedback Survey") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        if (isFeedbackSubmitted) {
-            // Show thank-you message
-            ThankYouContent(modifier = Modifier.padding(innerPadding))
-        } else {
-            // Show feedback form
-            SurveyContent(
-                modifier = Modifier.padding(innerPadding),
-                navController = navController,
-                onSubmit = { isFeedbackSubmitted = true } // Mark feedback as submitted
-            )
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val contentColor = if (isDarkMode.value) Color.White else Color.Black
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (isFeedbackSubmitted) "Thank You" else "Feedback Survey", color = contentColor) },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = contentColor
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = backgroundColor,
+                        titleContentColor = contentColor
+                    )
+                )
+            }
+        ) { innerPadding ->
+            if (isFeedbackSubmitted) {
+                // Show thank-you message
+                ThankYouContent(
+                    modifier = Modifier.padding(innerPadding),
+                    isDarkMode = isDarkMode
+                )
+            } else {
+                // Show feedback form
+                SurveyContent(
+                    modifier = Modifier.padding(innerPadding),
+                    navController = navController,
+                    onSubmit = { isFeedbackSubmitted = true }, // Mark feedback as submitted
+                    isDarkMode = isDarkMode
+                )
+            }
         }
     }
 }
@@ -53,15 +75,20 @@ fun SurveyScreen(navController: NavController) {
 fun SurveyContent(
     modifier: Modifier = Modifier,
     navController: NavController,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    isDarkMode: MutableState<Boolean>
 ) {
     val question1Answer = remember { mutableStateOf("") }
     val question2Answer = remember { mutableStateOf("") }
     val question3Answer = remember { mutableStateOf("") }
 
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.Start
@@ -71,11 +98,13 @@ fun SurveyContent(
             text = "We Value Your Feedback",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
             text = "Please take a moment to share your thoughts about WellNest. Your feedback helps us improve.",
             fontSize = 16.sp,
+            color = textColor,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -84,13 +113,24 @@ fun SurveyContent(
             text = "1. How do you feel about the app?",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         OutlinedTextField(
             value = question1Answer.value,
             onValueChange = { question1Answer.value = it },
-            label = { Text("Your answer") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Your answer", color = textColor) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = LocalTextStyle.current.copy(color = textColor),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = backgroundColor,
+                unfocusedContainerColor = backgroundColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                focusedIndicatorColor = textColor,
+                unfocusedIndicatorColor = textColor,
+                cursorColor = textColor
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -99,13 +139,24 @@ fun SurveyContent(
             text = "2. What features do you like the most?",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         OutlinedTextField(
             value = question2Answer.value,
             onValueChange = { question2Answer.value = it },
-            label = { Text("Your answer") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Your answer", color = textColor) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = LocalTextStyle.current.copy(color = textColor),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = backgroundColor,
+                unfocusedContainerColor = backgroundColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                focusedIndicatorColor = textColor,
+                unfocusedIndicatorColor = textColor,
+                cursorColor = textColor
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -114,13 +165,24 @@ fun SurveyContent(
             text = "3. Any suggestions for improvement?",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         OutlinedTextField(
             value = question3Answer.value,
             onValueChange = { question3Answer.value = it },
-            label = { Text("Your answer") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Your answer", color = textColor) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = LocalTextStyle.current.copy(color = textColor),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = backgroundColor,
+                unfocusedContainerColor = backgroundColor,
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                focusedIndicatorColor = textColor,
+                unfocusedIndicatorColor = textColor,
+                cursorColor = textColor
+            )
         )
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -137,11 +199,15 @@ fun SurveyContent(
     }
 }
 
+
 @Composable
-fun ThankYouContent(modifier: Modifier = Modifier) {
+fun ThankYouContent(modifier: Modifier = Modifier, isDarkMode: MutableState<Boolean>) {
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(if (isDarkMode.value) Color.Black else Color.White)
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -150,11 +216,13 @@ fun ThankYouContent(modifier: Modifier = Modifier) {
             text = "Thank you for your feedback!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 16.dp)
         )
         Text(
             text = "We appreciate your input and will use it to improve WellNest.",
             fontSize = 16.sp,
+            color = textColor,
             modifier = Modifier.padding(bottom = 16.dp)
         )
     }

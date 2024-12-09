@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
         AppDatabase.getDatabase(this)
         enableEdgeToEdge()
         setContent {
+            val isDarkMode = remember { mutableStateOf(false) } // Centralized state for dark mode
             WellNestTheme {
                 val navController = rememberNavController()
                 NavHost(
@@ -101,19 +102,22 @@ fun MainScreen() {
             startDestination = "nav_todo",
             Modifier.padding(innerPadding)
         ) {
-            composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
-            composable("nav_calendar") { CalendarScreen(navController) } // Reference to the Calendar screen
-            composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
-            composable("nav_profile") { ProfileScreen(navController) } // Reference to the Profile screen
-            composable("nav_about_us") { AboutUsScreen(navController) }
+            composable("nav_todo") { TodoScreen(navController, isDarkMode) } // Reference to the To-Do screen
+            composable("nav_calendar") { CalendarScreen(navController, isDarkMode) } // Reference to the Calendar screen
+            composable("nav_stat") { StatisticsScreen(isDarkMode) } // Reference to the Statistics screen
+            composable("nav_profile") { ProfileScreen(navController,isDarkMode) } // Reference to the Profile screen
+            composable("nav_about_us") { AboutUsScreen(navController, isDarkMode) }
             composable("nav_add_item") { AddItemFragment(navController) }
-            composable("survey") { SurveyScreen(navController) }
+            composable("survey") { SurveyScreen(navController, isDarkMode) }
 
             composable("meditation") { MeditationScreen(navController)}
             composable("pet_profile") { PetProfileScreen(navController) }
-            composable("help") { HelpScreen(navController) }
+
+            composable("help") { HelpScreen(navController, isDarkMode) }
             composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController) }
-            composable("privacy") { PrivacyScreen(navController) }
+            composable("privacy") { PrivacyScreen(navController, isDarkMode) }
+
+            
 
             // Editing a todo
             composable(
@@ -133,7 +137,8 @@ fun MainScreen() {
                 EditTodoScreen(
                     itemId = todoId,
                     navController = navController,
-                    backgroundColor = backgroundColor
+                    backgroundColor = backgroundColor,
+                    isDarkMode = isDarkMode
                 )
             }
         }

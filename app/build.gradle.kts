@@ -98,10 +98,14 @@ dependencies {
     implementation ("androidx.media3:media3-exoplayer:1.0.0")
     implementation("com.google.android.gms:play-services-fitness:21.0.1")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    implementation ("androidx.compose.material3:material3:1.3.1")
+
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation("io.github.sceneview:sceneview:2.2.1")
+
+
 }

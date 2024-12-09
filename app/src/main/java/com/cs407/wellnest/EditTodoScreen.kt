@@ -35,7 +35,8 @@ import java.time.format.DateTimeFormatter
 fun EditTodoScreen(itemId: String?,
                    navController: NavController,
                    backgroundColor: Color,
-                   viewModel: TodoViewModel = viewModel()
+                   viewModel: TodoViewModel = viewModel(),
+                   isDarkMode: MutableState<Boolean>
 ) {
     var goalText by remember { mutableStateOf(TextFieldValue("")) }
     var descriptionText by remember { mutableStateOf(TextFieldValue("")) }

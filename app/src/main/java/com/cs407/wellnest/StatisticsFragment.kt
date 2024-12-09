@@ -22,7 +22,7 @@ import androidx.compose.foundation.lazy.items
 
 
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     val context = LocalContext.current
     val googleFitHelper = remember { GoogleFitHelper(context) }
 
