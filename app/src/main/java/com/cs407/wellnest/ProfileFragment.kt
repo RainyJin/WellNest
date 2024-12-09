@@ -50,9 +50,8 @@ class ProfileViewModel : ViewModel() {
 }
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController, isDarkMode: MutableState<Boolean>) {
     // Dark mode state
-    val isDarkMode = remember { mutableStateOf(false) }
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
     val contentColor = if (isDarkMode.value) Color.White else Color.Black
 
@@ -70,7 +69,7 @@ fun ProfileScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
-        ProfileSection(viewModel , contentColor)
+        ProfileSection(viewModel , contentColor, isDarkMode)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -86,7 +85,7 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun ProfileSection(viewModel: ProfileViewModel = viewModel(), contentColor: Color) {
+fun ProfileSection(viewModel: ProfileViewModel = viewModel(), contentColor: Color, isDarkMode: MutableState<Boolean>) {
     // Use the avatar URI from ViewModel
     val avatarUri = viewModel.avatarUri
 
@@ -196,7 +195,7 @@ fun SettingsSection(
         )
 
         // Dark Mode Toggle
-       // DarkModeToggle(isDarkMode)
+       DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -345,22 +344,22 @@ fun NotificationPreferenceItem(title: String, isDarkMode: Boolean) {
     }
 }
 
-//@Composable
-//fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
-//    Row(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(vertical = 4.dp),
-//        verticalAlignment = Alignment.CenterVertically,
-//        horizontalArrangement = Arrangement.SpaceBetween
-//    ) {
-//        Text(text = "Dark Mode", color = if (isDarkMode.value) Color.White else Color.Black)
-//        Switch(
-//            checked = isDarkMode.value,
-//            onCheckedChange = { isDarkMode.value = it }
-//        )
-//    }
-//}
+@Composable
+fun DarkModeToggle(isDarkMode: MutableState<Boolean>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = "Dark Mode", color = if (isDarkMode.value) Color.White else Color.Black)
+        Switch(
+            checked = isDarkMode.value,
+            onCheckedChange = { isDarkMode.value = it }
+        )
+    }
+}
 
 @Composable
 fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onHelpClick: () -> Unit, onPrivacyClick: () -> Unit) {

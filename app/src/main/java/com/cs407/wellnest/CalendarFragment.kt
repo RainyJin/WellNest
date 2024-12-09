@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +38,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: CountdownViewModel = viewModel()) {
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     LaunchedEffect(Unit) {
         viewModel.deleteExpiredCountdown()

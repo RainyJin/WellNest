@@ -21,7 +21,7 @@ import com.cs407.wellnest.utils.GoogleFitHelper
 
 
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     val context = LocalContext.current
     val googleFitHelper = remember { GoogleFitHelper(context) }
 

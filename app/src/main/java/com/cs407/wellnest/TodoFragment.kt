@@ -65,7 +65,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @Composable
-fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
+fun TodoScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: TodoViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
     val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
 
