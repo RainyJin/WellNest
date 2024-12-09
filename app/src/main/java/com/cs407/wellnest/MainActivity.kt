@@ -107,14 +107,14 @@ fun MainScreen() {
             composable("nav_stat") { StatisticsScreen(isDarkMode) } // Reference to the Statistics screen
             composable("nav_profile") { ProfileScreen(navController,isDarkMode) } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController, isDarkMode) }
-            composable("nav_add_item") { AddItemFragment(navController) }
+            composable("nav_add_item") { AddItemFragment(navController, isDarkMode) }
             composable("survey") { SurveyScreen(navController, isDarkMode) }
 
             composable("meditation") { MeditationScreen(navController, isDarkMode)}
             composable("pet_profile") { PetProfileScreen(navController, isDarkMode) }
 
             composable("help") { HelpScreen(navController, isDarkMode) }
-            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController) }
+            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController, isDarkMode) }
             composable("privacy") { PrivacyScreen(navController, isDarkMode) }
 
             
