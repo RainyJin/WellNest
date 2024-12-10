@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CalendarScreen(navController: NavController, viewModel: CalendarViewModel = viewModel()) {
-//    val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
     val countdownState = viewModel.getCountdownItemsFlow().collectAsState(initial = emptyList())
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
 
@@ -74,18 +73,6 @@ fun CalendarScreen(navController: NavController, viewModel: CalendarViewModel = 
         }
     }
     Log.d("CalendarDays", calendarDays.toString())
-
-    // Get a list of CalendarDays from the countdown items
-//    val calendarDays = countdownItems.map { item ->
-//        val parsedDate = LocalDate.parse(item.targetDate, formatter)
-//        val calendarDay = Calendar.getInstance().apply {
-//            set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
-//
-//        }
-//        CalendarDay(calendarDay).apply {
-//            backgroundResource = R.drawable.ic_target_date
-//        }
-//    }
 
     Column(
         modifier = Modifier

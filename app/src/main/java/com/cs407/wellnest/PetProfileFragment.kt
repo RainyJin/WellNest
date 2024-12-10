@@ -149,28 +149,28 @@ fun PetProfileScreen(navController: NavController) {
             ) {
                 IconButton(onClick = { message = getMessage("self") }) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_self), // Replace with your image resource
+                        painter = painterResource(id = R.drawable.ic_self),
                         contentDescription = "Self",
                         modifier = Modifier.size(26.dp)
                     )
                 }
                 IconButton(onClick = { message = getMessage("study") }) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_study), // Replace with your image resource
+                        painter = painterResource(id = R.drawable.ic_study),
                         contentDescription = "Study",
                         modifier = Modifier.size(26.dp)
                     )
                 }
                 IconButton(onClick = { message = getMessage("relationship") }) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_relationship), // Replace with your image resource
+                        painter = painterResource(id = R.drawable.ic_relationship),
                         contentDescription = "Relationship",
                         modifier = Modifier.size(26.dp)
                     )
                 }
                 IconButton(onClick = { message = getMessage("emotion") }) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_emotion), // Replace with your image resource
+                        painter = painterResource(id = R.drawable.ic_emotion),
                         contentDescription = "Emotion",
                         modifier = Modifier.size(26.dp)
                     )
@@ -185,7 +185,7 @@ fun PetProfileScreen(navController: NavController) {
                     .wrapContentWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFFE8F5E9)) // Light green background
-                    .padding(vertical = 12.dp, horizontal = 16.dp) // Adjust padding as needed
+                    .padding(vertical = 12.dp, horizontal = 16.dp)
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text(
