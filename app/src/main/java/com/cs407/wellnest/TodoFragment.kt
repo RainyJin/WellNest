@@ -200,10 +200,17 @@ fun TodoScreen(navController: NavController, isDarkMode: MutableState<Boolean>, 
                 modifier = Modifier.fillMaxHeight(),
                 contentPadding = PaddingValues(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
             ) {
-                nextTenDays.forEach { date ->
+                // Filter out dates that have no uncompleted todos
+                val filteredDates = nextTenDays.filter { date ->
                     val todosForDate = groupedTodos[date] ?: emptyList()
+                    todosForDate.any { !it.isCompleted }
+                }
 
-                    if (todosForDate.isNotEmpty()) {
+                filteredDates.forEach { date ->
+                    val todosForDate = groupedTodos[date] ?: emptyList()
+                    val uncompletedTodos = todosForDate.filter { !it.isCompleted }
+
+                    if (uncompletedTodos.isNotEmpty()) {
                         // Header for the date
                         item {
                             val dateText = when {
@@ -220,7 +227,7 @@ fun TodoScreen(navController: NavController, isDarkMode: MutableState<Boolean>, 
                         }
 
                         // Todos for this date
-                        items(todosForDate.filter { !it.isCompleted }) { todo ->
+                        items(uncompletedTodos) { todo ->
                             TodoListItem(
                                 todo = todo,
                                 onCheckChanged = { isCompleted ->
