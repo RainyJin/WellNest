@@ -45,13 +45,6 @@ interface TodoDao {
     suspend fun updateTodoCompletion(todoId: String, isCompleted: Boolean)
 }
 
-// Migration strategy
-val MIGRATION_1_2 = object : Migration(2, 3) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE your_table ADD COLUMN new_column_name TEXT")
-    }
-}
-
 @Database(entities = [TodoEntity::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao

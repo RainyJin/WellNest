@@ -42,16 +42,22 @@ import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+class ProfileViewModel : ViewModel() {
+    val avatarUri: MutableState<String?> = mutableStateOf(null)
+}
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController, isDarkMode: MutableState<Boolean>) {
     // Dark mode state
-    val isDarkMode = remember { mutableStateOf(false) }
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
     val contentColor = if (isDarkMode.value) Color.White else Color.Black
 
     // Remember scroll state
     val scrollState = rememberScrollState()
+    val viewModel: ProfileViewModel = viewModel()
 
     // Make the content scrollable by applying a verticalScroll modifier
     Column(
@@ -63,7 +69,7 @@ fun ProfileScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile Section
-        ProfileSection(contentColor)
+        ProfileSection(viewModel , contentColor, isDarkMode)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -78,13 +84,11 @@ fun ProfileScreen(navController: NavController) {
     }
 }
 
-
 @Composable
-fun ProfileSection(contentColor: Color) {
-    // State to hold the selected avatar URI
-    val avatarUri = remember { mutableStateOf<String?>(null) }
+fun ProfileSection(viewModel: ProfileViewModel = viewModel(), contentColor: Color, isDarkMode: MutableState<Boolean>) {
+    // Use the avatar URI from ViewModel
+    val avatarUri = viewModel.avatarUri
 
-    // Launcher for selecting an image
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -97,7 +101,6 @@ fun ProfileSection(contentColor: Color) {
             .size(100.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
-        // Use rememberAsyncImagePainter inside the composable context
         val painter = if (avatarUri.value != null) {
             rememberAsyncImagePainter(avatarUri.value)
         } else {
@@ -122,7 +125,6 @@ fun ProfileSection(contentColor: Color) {
             )
         }
 
-        // Plus button to open file picker
         IconButton(
             onClick = { launcher.launch("image/*") },
             modifier = Modifier
@@ -141,13 +143,13 @@ fun ProfileSection(contentColor: Color) {
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    // User name text
     Text(
         text = "Bucky",
         fontSize = 24.sp,
         color = contentColor
     )
 }
+
 
 @Composable
 fun SettingsSection(
@@ -193,7 +195,7 @@ fun SettingsSection(
         )
 
         // Dark Mode Toggle
-        DarkModeToggle(isDarkMode)
+       DarkModeToggle(isDarkMode)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -368,7 +370,7 @@ fun HelpAndPoliciesSection(isDarkMode: Boolean, onFeedbackClick: () -> Unit, onH
         rememberVectorPainter(image = Icons.Default.Lock),
         painterResource(id = R.drawable.icon_comment),
 
-    )
+        )
 
 
     Column {
