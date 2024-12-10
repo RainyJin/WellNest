@@ -34,7 +34,9 @@ import java.util.Calendar
 import java.util.UUID
 
 @Composable
-fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel = viewModel()) {
+fun AddItemFragment(navController: NavController,
+                    isDarkMode: MutableState<Boolean>,
+                    viewModel: CountdownViewModel = viewModel()) {
     val context = LocalContext.current
 
     val backStackEntry = navController.currentBackStackEntry
@@ -64,10 +66,16 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
     val calendar = Calendar.getInstance()
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
+    // Dynamic Colors for Dark Mode
+    val backgroundColor = if (isDarkMode.value) Color.Black else LightPink
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val buttonColor = if (isDarkMode.value) MidPink else LightPink
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(LightPink),
+            .background(backgroundColor),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         // event input card
@@ -77,7 +85,7 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                 .fillMaxWidth()
                 .height(400.dp)
                 .padding(vertical = 40.dp, horizontal = 25.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = cardColor)
         ) {
             Column(
                 modifier = Modifier
@@ -91,18 +99,26 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                     Icon(
                         imageVector = Default.Close,
                         contentDescription = "Close",
-                        tint = Color.Black
+                        tint = textColor
                     )
                 }
 
-                // input field
+                // Input Field
                 TextField(
                     value = eventDesc,
                     onValueChange = { eventDesc = it },
-                    placeholder = { Text("Enter a new event...") },
+                    placeholder = { Text("Enter a new event...", color = textColor) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = TextFieldDefaults.colors()
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedIndicatorColor = textColor,
+                        unfocusedIndicatorColor = textColor,
+                        cursorColor = textColor
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(40.dp))
@@ -114,6 +130,7 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                     IconText(
                         icon = R.drawable.ic_calendar,
                         text = eventDate,
+                        textColor = textColor,
                         onClick = { DatePickerDialog(
                             navController.context,
                             { _, year, month, day ->
@@ -127,11 +144,12 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
-                    ){
+                    ) {
                         IconText(
                             icon = R.drawable.ic_repeat,
                             text = eventRepeat,
-                            onClick = { expandedDropdown = !expandedDropdown}
+                            textColor = textColor, // Added textColor
+                            onClick = { expandedDropdown = !expandedDropdown }
                         )
                         if (eventRepeat != "Does not repeat") {
                             IconText(
@@ -164,7 +182,7 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                         ) {
                             repeatOptions.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(option) },
+                                    text = { Text(option, color = textColor) },
                                     onClick = {
                                         eventRepeat = option
                                         expandedDropdown = false
@@ -250,10 +268,10 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                         }
                         navController.popBackStack()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MidPink),
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Save")
+                    Text("Save", color = textColor)
                 }
             }
         }
@@ -263,7 +281,7 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
             text = "SUGGESTIONS",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(start = 30.dp),
-            color = DeepPink
+            color = buttonColor
         )
 
         // suggestion list
@@ -272,6 +290,7 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
                 text = suggestion,
                 onRemove = { suggestions.remove(suggestion) },
                 onClick = { eventDesc = suggestion }
+                isDarkMode = isDarkMode // Pass isDarkMode
             )
         }
 
@@ -281,23 +300,25 @@ fun AddItemFragment(navController: NavController, viewModel: CalendarViewModel =
 
 // clickable icon & text for calendar and repeat options
 @Composable
-fun IconText(icon: Int, text: String, onClick: () -> Unit) {
+fun IconText(icon: Int, text: String, textColor: Color, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton( onClick = onClick ) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
-                tint = Color.Black
+                tint = textColor
             )
         }
         Spacer(modifier = Modifier.width(4.dp))
-        Text(text = text, color = Color.Black,
-            modifier = Modifier.clickable { onClick() })
+        Text(text = text, color = textColor, modifier = Modifier.clickable { onClick() })
     }
 }
 
 @Composable
-fun SuggestionItem(text: String, onRemove: () -> Unit, onClick: () -> Unit) {
+fun SuggestionItem(text: String, onRemove: () -> Unit , isDarkMode: MutableState<Boolean>) {
+    val backgroundColor = if (isDarkMode.value) MidPink else LightPink
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -313,12 +334,12 @@ fun SuggestionItem(text: String, onRemove: () -> Unit, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = text, color = Color.White)
+            Text(text = text, color = textColor)
             IconButton(onClick = onRemove) {
                 Icon(
                     imageVector = Default.Close,
                     contentDescription = "Remove",
-                    tint = Color.White
+                    tint = textColor
                 )
             }
         }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +44,7 @@ import kotlin.random.Random
 
 @SuppressLint("ServiceCast")
 @Composable
-fun PetProfileScreen(navController: NavController) {
+fun PetProfileScreen(navController: NavController,  isDarkMode: MutableState<Boolean>) {
     val context = LocalContext.current
     val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -90,9 +91,18 @@ fun PetProfileScreen(navController: NavController) {
         }
     }
 
+    // Dark Mode Colors
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val messageBackgroundColor = if (isDarkMode.value) Color(0xFF2E7D32) else Color(0xFFE8F5E9)
+    val messageTextColor = if (isDarkMode.value) Color.White else Color(0xFF4CAF50)
+
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .background(backgroundColor) // Background changes dynamically
     ) {
         IconButton(
             onClick = { navController.popBackStack() },
@@ -103,7 +113,7 @@ fun PetProfileScreen(navController: NavController) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.Black
+                tint = textColor // Icon color changes dynamically
             )
         }
 
@@ -126,10 +136,10 @@ fun PetProfileScreen(navController: NavController) {
                         .height(230.dp)
                         .padding(16.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFFE8F5E9))
+                        .background(messageBackgroundColor) // Background of the message
                         .padding(16.dp)
                 ) {
-                    Text(text = message, fontSize = 18.sp, color = Color(0xFF4CAF50))
+                    Text(text = message, fontSize = 18.sp, color = messageTextColor)
                 }
             }
 
@@ -184,13 +194,13 @@ fun PetProfileScreen(navController: NavController) {
                 modifier = Modifier
                     .wrapContentWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFE8F5E9)) // Light green background
-                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                    .background(messageBackgroundColor)
+                    .padding(vertical = 12.dp, horizontal = 16.dp) 
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text(
                     text = "Select things to talk about",
-                    color = Color(0xFF4CAF50), // Green text color
+                    color = messageTextColor,
                     fontSize = 16.sp
                 )
             }
@@ -204,6 +214,7 @@ fun PetProfileScreen(navController: NavController) {
             ) {
                 Text(
                     text = "Profile",
+                    color = textColor,
                     style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 )
             }
@@ -214,23 +225,23 @@ fun PetProfileScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(cardColor, RoundedCornerShape(16.dp))
                     .padding(16.dp)
             ) {
                 birdNameDescPair?.let {
                     ProfileDetailItem(label = "Breed", value = it.first,
-                        detail = it.second)
+                        detail = it.second, textColor = textColor)
                 }
-                ProfileDetailItem(label = "Age", value = "27 Days")
-                ProfileDetailItem(label = "Weight", value = "20g")
-                ProfileDetailItem(label = "Height", value = "12cm")
+                ProfileDetailItem(label = "Age", value = "27 Days", textColor = textColor)
+                ProfileDetailItem(label = "Weight", value = "20g", textColor = textColor)
+                ProfileDetailItem(label = "Height", value = "12cm", textColor = textColor)
             }
         }
     }
 }
 
 @Composable
-fun ProfileDetailItem(label: String, value: String, detail: String = "") {
+fun ProfileDetailItem(label: String, value: String, detail: String = "", textColor: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,14 +249,14 @@ fun ProfileDetailItem(label: String, value: String, detail: String = "") {
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, color = textColor),
             modifier = Modifier.width(100.dp)
         )
         Column {
-            Text(text = value, style = MaterialTheme.typography.bodyLarge)
+            Text(text = value, style = MaterialTheme.typography.bodyLarge.copy(color = textColor))
             if (detail != "") {
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = detail, style = MaterialTheme.typography.bodyMedium)
+                Text(text = detail, style = MaterialTheme.typography.bodyMedium.copy(color = textColor))
             }
         }
 
