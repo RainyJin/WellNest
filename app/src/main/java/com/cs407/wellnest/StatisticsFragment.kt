@@ -1,5 +1,6 @@
 package com.cs407.wellnest
 
+
 import android.content.Context
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -21,16 +22,20 @@ import com.cs407.wellnest.utils.GoogleFitHelper
 import androidx.compose.foundation.lazy.items
 
 
+
+
 @Composable
 fun StatisticsScreen() {
     val context = LocalContext.current
     val googleFitHelper = remember { GoogleFitHelper(context) }
+
 
     // Health states for Day, Week, and Month tabs
     var daySteps by remember { mutableStateOf(0) }
     var weekSteps by remember { mutableStateOf(0) }
     var monthSteps by remember { mutableStateOf(0) }
     var stepGoal by remember { mutableStateOf(10000) } // Default step goal
+
 
     // Other fields for Day, Week, and Month
     var dayCalories by remember { mutableStateOf(0.0) }
@@ -44,8 +49,10 @@ fun StatisticsScreen() {
     var runningJogging by remember { mutableStateOf(0f) } // Default value set to 0
     var foodConsumed by remember { mutableStateOf("2,000 kcal") }
 
+
     var selectedTabIndex by remember { mutableStateOf(0) } // Track selected tab index
     var showGoalDialog by remember { mutableStateOf(false) } // Control GoalDialog visibility
+
 
     // Check and fetch Google Fit data
     LaunchedEffect(Unit) {
@@ -60,6 +67,7 @@ fun StatisticsScreen() {
                 onFailure = { exception -> Log.e("StatisticsScreen", "Failed to fetch daily data: ${exception.message}") }
             )
 
+
             // Fetch Weekly Data
             googleFitHelper.fetchWeekData(
                 onSuccess = { steps ->
@@ -69,6 +77,7 @@ fun StatisticsScreen() {
                 },
                 onFailure = { exception -> Log.e("StatisticsScreen", "Failed to fetch weekly data: ${exception.message}") }
             )
+
 
             // Fetch Monthly Data
             googleFitHelper.fetchMonthData(
@@ -87,6 +96,7 @@ fun StatisticsScreen() {
         }
     }
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,6 +109,7 @@ fun StatisticsScreen() {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
+
 
         // Tabs for Day, Week, Month
         TabRow(
@@ -114,7 +125,9 @@ fun StatisticsScreen() {
             }
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
+
 
         // Display content based on the selected tab
         when (selectedTabIndex) {
@@ -156,9 +169,11 @@ fun StatisticsScreen() {
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = { newGymHours -> gymHours = newGymHours },
                 onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
+
             )
         }
     }
+
 
     // Show GoalDialog when triggered
     if (showGoalDialog) {
@@ -169,6 +184,7 @@ fun StatisticsScreen() {
         )
     }
 }
+
 
 @Composable
 fun TimeRangeContent(
@@ -191,6 +207,7 @@ fun TimeRangeContent(
     var foodLog by remember { mutableStateOf(listOf<String>()) }
     var sleepLog by remember { mutableStateOf(listOf<String>()) }
     var selectedValue by remember { mutableStateOf("") }
+
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -224,6 +241,7 @@ fun TimeRangeContent(
             }
         }
 
+
         // Info Cards
         item {
             Row(
@@ -234,6 +252,7 @@ fun TimeRangeContent(
                 InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5))
             }
         }
+
 
         // Distance and Sleep
         item {
@@ -261,6 +280,7 @@ fun TimeRangeContent(
                 }
             }
         }
+
 
         // Gym Hours
         item {
@@ -300,6 +320,7 @@ fun TimeRangeContent(
             }
         }
 
+
         // Running/Jogging
         item {
             Box(
@@ -338,6 +359,7 @@ fun TimeRangeContent(
             }
         }
 
+
         // Food Section
         item {
             Box(
@@ -360,6 +382,7 @@ fun TimeRangeContent(
         }
     }
 
+
     // Dialog for Gym Hours
     if (showGymDialog) {
         InputDialog(
@@ -372,6 +395,7 @@ fun TimeRangeContent(
             onDismiss = { showGymDialog = false }
         )
     }
+
 
     // Dialog for Running/Jogging
     if (showRunningJoggingDialog) {
@@ -386,6 +410,7 @@ fun TimeRangeContent(
         )
     }
 
+
     // Sleep Dialog
     if (showSleepDialog) {
         SleepLogDialog(
@@ -396,6 +421,7 @@ fun TimeRangeContent(
             onDismiss = { showSleepDialog = false }
         )
     }
+
 
     // Food Dialog
     if (showFoodDialog) {
@@ -412,6 +438,10 @@ fun TimeRangeContent(
 
 
 
+
+
+
+
 @Composable
 fun FoodLogDialog(
     foodLog: List<String>,
@@ -419,6 +449,7 @@ fun FoodLogDialog(
     onDismiss: () -> Unit
 ) {
     var newFood by remember { mutableStateOf("") } // State for new food entry
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -437,7 +468,9 @@ fun FoodLogDialog(
                     }
                 }
 
+
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 // Input for new food
                 TextField(
@@ -469,6 +502,8 @@ fun FoodLogDialog(
 }
 
 
+
+
 @Composable
 fun InputDialog(
     title: String,
@@ -477,6 +512,7 @@ fun InputDialog(
     onDismiss: () -> Unit
 ) {
     var inputValue by remember { mutableStateOf(currentValue) }
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -505,6 +541,9 @@ fun InputDialog(
 
 
 
+
+
+
 @Composable
 fun GoalDialog(
     currentGoal: Int,
@@ -512,6 +551,7 @@ fun GoalDialog(
     onDismiss: () -> Unit
 ) {
     var inputGoal by remember { mutableStateOf(currentGoal.toString()) }
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -543,6 +583,7 @@ fun GoalDialog(
     )
 }
 
+
 @Composable
 fun InfoBox(
     label: String,
@@ -563,6 +604,7 @@ fun InfoBox(
     }
 }
 
+
 @Composable
 fun SleepLogDialog(
     sleepLog: List<String>,
@@ -570,6 +612,7 @@ fun SleepLogDialog(
     onDismiss: () -> Unit
 ) {
     var newSleep by remember { mutableStateOf("") } // State for new sleep entry
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -588,7 +631,9 @@ fun SleepLogDialog(
                     }
                 }
 
+
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 // Input for new sleep
                 TextField(
@@ -618,3 +663,4 @@ fun SleepLogDialog(
         }
     )
 }
+
