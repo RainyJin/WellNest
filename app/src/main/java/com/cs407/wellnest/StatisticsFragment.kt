@@ -25,9 +25,16 @@ import androidx.compose.foundation.lazy.items
 
 
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     val context = LocalContext.current
     val googleFitHelper = remember { GoogleFitHelper(context) }
+
+    // Define dark mode and light mode colors
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val progressColor = if (isDarkMode.value) Color.Green else Color.Blue
+    val tabSelectedColor = if (isDarkMode.value) Color.Gray else Color.LightGray
+    val cardBackgroundColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
 
 
     // Health states for Day, Week, and Month tabs
@@ -100,12 +107,14 @@ fun StatisticsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .padding(16.dp)
     ) {
         Text(
             text = "Health Summary",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -114,13 +123,14 @@ fun StatisticsScreen() {
         // Tabs for Day, Week, Month
         TabRow(
             selectedTabIndex = selectedTabIndex,
+            containerColor = backgroundColor,
             modifier = Modifier.fillMaxWidth()
         ) {
             listOf("Day", "Week", "Month").forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
-                    text = { Text(title) }
+                    text = { Text(title, color = textColor) }
                 )
             }
         }
@@ -142,7 +152,8 @@ fun StatisticsScreen() {
                 goal = stepGoal,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
+                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
+                isDarkMode = isDarkMode
             )
             1 -> TimeRangeContent(
                 steps = 49564,
@@ -155,7 +166,9 @@ fun StatisticsScreen() {
                 goal = stepGoal * 7,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
+                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
+                isDarkMode = isDarkMode
+
             )
             2 -> TimeRangeContent(
                 steps = 49564,
@@ -168,8 +181,9 @@ fun StatisticsScreen() {
                 goal = stepGoal * 30,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging }
 
+                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
+                isDarkMode = isDarkMode
             )
         }
     }
@@ -180,7 +194,9 @@ fun StatisticsScreen() {
         GoalDialog(
             currentGoal = stepGoal,
             onGoalChange = { newGoal -> stepGoal = newGoal },
-            onDismiss = { showGoalDialog = false }
+            onDismiss = { showGoalDialog = false },
+            isDarkMode = isDarkMode
+
         )
     }
 }
@@ -198,8 +214,15 @@ fun TimeRangeContent(
     goal: Int,
     onGoalClick: () -> Unit,
     onGymHoursChange: (Float) -> Unit,
-    onRunningJoggingChange: (Float) -> Unit
+    onRunningJoggingChange: (Float) -> Unit,
+    isDarkMode: MutableState<Boolean>
 ) {
+
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
+
+
     var showGymDialog by remember { mutableStateOf(false) }
     var showRunningJoggingDialog by remember { mutableStateOf(false) }
     var showFoodDialog by remember { mutableStateOf(false) }
@@ -218,6 +241,7 @@ fun TimeRangeContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(cardColor, RoundedCornerShape(8.dp))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -229,13 +253,13 @@ fun TimeRangeContent(
                 ) {
                     CircularProgressIndicator(
                         progress = steps / goal.toFloat(),
-                        color = Color.Green,
+                        color = if (isDarkMode.value) Color.Green else Color.Blue,
                         strokeWidth = 12.dp,
                         modifier = Modifier.size(200.dp)
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(goal.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = Color.Gray)
+                        Text(goal.toString(), fontSize = 24.sp, color = textColor, fontWeight = FontWeight.Bold)
+                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = textColor)
                     }
                 }
             }
@@ -248,8 +272,8 @@ fun TimeRangeContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                InfoBox("Steps", "$steps steps", Color(0xFFADD8E6))
-                InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5))
+                InfoBox("Steps", "$steps steps", cardColor, textColor)
+                InfoBox("Calories", "$calories kcal", cardColor, textColor)
             }
         }
 
@@ -260,7 +284,7 @@ fun TimeRangeContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                InfoBox("Distance", "$runDistance m", Color(0xFF98FB98))
+                InfoBox("Distance", "$runDistance m", backgroundColor,  textColor)
                 Box(
                     modifier = Modifier
                         .background(Color(0xFFD8BFD8), RoundedCornerShape(8.dp))
@@ -548,21 +572,36 @@ fun InputDialog(
 fun GoalDialog(
     currentGoal: Int,
     onGoalChange: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isDarkMode: MutableState<Boolean>
 ) {
+    val backgroundColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+
+
+// Use `remember` for managing the input goal state
     var inputGoal by remember { mutableStateOf(currentGoal.toString()) }
 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Set Your Goal") },
+        title = { Text("Set Your Goal" , color = textColor) },
         text = {
             Column {
-                Text("Enter your step goal:")
+                Text("Enter your step goal:",color = textColor )
                 TextField(
                     value = inputGoal,
                     onValueChange = { inputGoal = it },
-                    placeholder = { Text("Step Goal") }
+                    placeholder = { Text("Step Goal") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        cursorColor = textColor,
+                        errorContainerColor = Color.Transparent,
+                        errorIndicatorColor = Color.Red
+                    )
                 )
             }
         },
@@ -577,9 +616,10 @@ fun GoalDialog(
         },
         dismissButton = {
             Button(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", color = textColor)
             }
-        }
+        },
+        containerColor = backgroundColor
     )
 }
 
@@ -589,6 +629,7 @@ fun InfoBox(
     label: String,
     value: String,
     backgroundColor: Color,
+    textColor: Color,
     modifier: Modifier = Modifier.width(160.dp)
 ) {
     Box(
@@ -597,9 +638,9 @@ fun InfoBox(
             .padding(16.dp)
     ) {
         Column {
-            Text(label, fontSize = 14.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+            Text(label, fontSize = 14.sp, color = textColor, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(value, fontSize = 18.sp, color = Color.Black)
+            Text(value, fontSize = 18.sp, color = textColor)
         }
     }
 }

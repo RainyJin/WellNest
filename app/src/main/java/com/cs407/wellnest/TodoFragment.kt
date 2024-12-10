@@ -65,7 +65,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @Composable
-fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewModel()) {
+fun TodoScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: TodoViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) } // State to track selected tab
     val todos by viewModel.getTodosByCategory(selectedTabIndex).collectAsState(initial = emptyList())
 
@@ -78,6 +78,14 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
     val modelLoader = rememberModelLoader(engine)
     val environmentLoader = rememberEnvironmentLoader(engine)
 
+    // Dark Mode
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val contentColor = if (isDarkMode.value) Color.White else Color.Black
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val cardTextColor = if (isDarkMode.value) Color.White else Color.DarkGray
+
+
+
     // Set up camera and rotation for the 3D view
     val cameraNode = rememberCameraNode(engine).apply {
         position = Position(x = 0.0f, y = 0.6f, z = 2.4f)
@@ -85,14 +93,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
     val centerNode = rememberNode(engine).apply {
         position = Position(x = 0.0f, y = 0.8f, z = 0.0f) // Example position for the target
     }.addChildNode(cameraNode)
-//    val cameraTransition = rememberInfiniteTransition(label = "CameraTransition")
-//    val cameraRotation by cameraTransition.animateRotation(
-//        initialValue = Rotation(y = 0.0f),
-//        targetValue = Rotation(y = 360.0f),
-//        animationSpec = infiniteRepeatable(
-//            animation = tween(durationMillis = 20000)
-//        )
-//    )
+
 
     // Read the GLB model file from assets
     val assetManager = context.assets
@@ -151,7 +152,8 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
             }) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Add To-Do"
+                    contentDescription = "Add To-Do",
+                    tint = contentColor
                 )
             }
         },
@@ -161,9 +163,11 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(backgroundColor)
                 .padding(horizontal = 16.dp) // Additional padding within inner padding
         ) {
-            TopSection(onMeditationClick = { navController.navigate("meditation") }, onPetClick={navController.navigate("pet_profile")})
+            TopSection(onMeditationClick = { navController.navigate("meditation") }, onPetClick={navController.navigate("pet_profile")},
+                isDarkMode = isDarkMode)
             Spacer(modifier = Modifier.height(16.dp))
             Box(
                 modifier = Modifier
@@ -210,6 +214,7 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                             Text(
                                 text = dateText,
                                 fontSize = 20.sp,
+                                color = contentColor,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
@@ -230,7 +235,9 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
                                         Color(0xFF48AB4C)
                                     }
                                     navController.navigate("edit_todo/${todo.id}/$selectedTabIndex/${backgroundColor.toArgb()}")
-                                }
+                                },
+                                cardColor = cardColor,
+                                textColor = cardTextColor
                             )
                         }
                     }
@@ -243,7 +250,8 @@ fun TodoScreen(navController: NavController, viewModel: TodoViewModel = viewMode
 }
 
 @Composable
-fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit) {
+fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit, isDarkMode: MutableState<Boolean>) {
+    val iconColor = if (isDarkMode.value) Color.White else Color.Black
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -255,6 +263,7 @@ fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_pet),
                 contentDescription = "First Button",
+                tint = iconColor,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -265,6 +274,7 @@ fun TopSection(onMeditationClick: () -> Unit, onPetClick: () -> Unit) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_meditation),
                 contentDescription = "Second Button",
+                tint = iconColor,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -303,7 +313,7 @@ fun MeditationScreen(onBack: () -> Unit) {
 
 
 @Composable
-fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
+fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit ) {
     val categories = listOf("Academics", "Health")
 
     SingleChoiceSegmentedButtonRow(
@@ -352,7 +362,9 @@ fun CategoryTabs(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
 @Composable
 fun TodoListItem(todo: TodoEntity,
                  onCheckChanged: (Boolean) -> Unit,
-                 onClick: () -> Unit) {
+                 onClick: () -> Unit,
+                 cardColor: Color,
+                 textColor: Color) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -360,7 +372,7 @@ fun TodoListItem(todo: TodoEntity,
             .padding(vertical = 3.dp)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -380,14 +392,14 @@ fun TodoListItem(todo: TodoEntity,
                 Text(
                     todo.title,
                     fontSize = 22.sp,
-                    color = Color.DarkGray,
+                    color = textColor,
                     textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
                 if (todo.description.isNotEmpty()) {
                     Text(
                         todo.description,
                         fontSize = 16.sp,
-                        color = Color.Gray,
+                        color = textColor.copy(alpha = 0.8f),
                         textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                     )
                 }

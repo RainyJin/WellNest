@@ -1,6 +1,7 @@
 package com.cs407.wellnest
 
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -13,6 +14,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,34 +40,54 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel = viewModel()) {
+fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: CountdownViewModel = viewModel()) {
+    val countdownState = viewModel.getCountdownItemsFlow().collectAsState(initial = emptyList())
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
+
+    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+
     LaunchedEffect(Unit) {
         viewModel.deleteExpiredCountdown()
+        countdownItems.clear()
         countdownItems.addAll(viewModel.getCountdownItems())
+        Log.d("CalendarScreen", "Countdown State Value: ${countdownState.value}")
     }
+
+    // Colors based on dark mode
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val cardBackgroundColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val buttonTint = if (isDarkMode.value) Color.LightGray else Salmon
+    val headerColorRes = if (isDarkMode.value) android.R.color.darker_gray else R.color.salmon
+    val calendarTextColorRes = if (isDarkMode.value) android.R.color.white else android.R.color.black
 
 
     // Get today's date
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
-    // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("M/d/yyyy")
-    val calendarDays = countdownItems.map { item ->
-        val parsedDate = LocalDate.parse(item.targetDate, formatter)
-        val calendar = Calendar.getInstance().apply {
-            set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+    // Convert countdown dates to Calendar objects
+    val targetDates = remember(countdownState.value) {
+        countdownState.value.map { countdown ->
+            val parsedDate = LocalDate.parse(countdown.targetDate, formatter)
+            Calendar.getInstance().apply {
+                set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+            }
         }
-        CalendarDay(calendar).apply {
+    }
+    Log.d("CalendarScreen", "Target Dates: $targetDates")
+
+    val calendarDays = targetDates.map {
+        CalendarDay(it).apply {
             backgroundResource = R.drawable.ic_target_date
         }
     }
+    Log.d("CalendarDays", calendarDays.toString())
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-
+            .background(backgroundColor)
     ) {
         AndroidView(
             // calendar
@@ -73,8 +96,10 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                     LayoutInflater.from(context).inflate(R.layout.fragment_calendar, null, false)
 
                 val calendarView = view.findViewById<CalendarView>(R.id.calendarView)
-                calendarView.setHeaderColor(R.color.salmon)
+                calendarView.setHeaderColor(headerColorRes)
                 calendarView.setCalendarDays(calendarDays)
+
+
 
                 view
             },
@@ -91,7 +116,7 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
             // today's date
             Text(
                 text = formattedDate,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(color = textColor),
                 modifier = Modifier.align(Alignment.Center)
             )
 
@@ -103,7 +128,7 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add Item",
-                    tint = Salmon
+                    tint = buttonTint
                 )
             }
         }
@@ -121,13 +146,27 @@ fun CalendarScreen(navController: NavController, viewModel: CountdownViewModel =
                     daysLeft = ChronoUnit.DAYS.between(today, LocalDate.parse(item.targetDate, formatter)),
                     description = item.description,
                     repeat = item.repeatOption,
+                    endDate = item.endDate,
                     navController = navController,
-                    onDelete = {
-                        viewModel.viewModelScope.launch {
-                            viewModel.deleteCountdown(item)
-                            countdownItems.remove(item)
+                    onDelete = { deleteAll ->
+                        if (deleteAll) {
+                            viewModel.viewModelScope.launch {
+                                // Delete all occurrences of the repeating event
+                                val allOccurrences = countdownItems.filter { it.id == item.id }
+                                allOccurrences.forEach { countdown ->
+                                    viewModel.deleteCountdown(countdown.id)
+                                }
+                                countdownItems.removeAll(allOccurrences)
+                            }
+                        } else {
+                            // Delete only the current occurrence
+                            viewModel.viewModelScope.launch {
+                                viewModel.deleteCountdown(item.id)
+                                countdownItems.remove(item)
+                            }
                         }
-                    }
+                    },
+                    isDarkMode = isDarkMode
                 )
             }
         }
@@ -140,30 +179,42 @@ fun CountdownCard(id: String,
                   daysLeft: Long,
                   description: String,
                   repeat: String,
+                  endDate: String?,
                   navController: NavController,
-                  onDelete: () -> Unit) {
+                  isDarkMode: MutableState<Boolean>,
+                  onDelete: (deleteAll: Boolean) -> Unit) {
     val showDialog = remember { mutableStateOf(false) }
+
+    // Colors based on dark mode
+    val cardBackgroundColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val daysIndicatorColor = if (isDarkMode.value) Red40 else Salmon
 
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = { showDialog.value = false },
-            title = { Text(text = "Confirm Deletion") },
-            text = { Text(text = "Do you really want to delete this item?") },
+            title = { Text(text = "Confirm Deletion",color = textColor) },
+            text = { Text(text = "Do you want to delete just this event or all occurrences? " +
+                    "You can also click outside the box to cancel.",
+                color = textColor) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete()  // Call onDelete if user confirms
-                        showDialog.value = false  // Close the dialog
+                        onDelete(true)
+                        showDialog.value = false
                     }
                 ) {
-                    Text("Yes")
+                    Text("Delete All", color = textColor)
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDialog.value = false }  // Just close the dialog if dismissed
+                    onClick = {
+                        onDelete(false)
+                        showDialog.value = false
+                    }
                 ) {
-                    Text("No")
+                    Text("Delete Only This", color = textColor)
                 }
             }
         )
@@ -180,10 +231,10 @@ fun CountdownCard(id: String,
                 )
             },
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
         onClick = {
-            navController.navigate("nav_add_item/${Uri.encode(id)}/" +
-                    "${Uri.encode(description)}/${Uri.encode(date)}/${Uri.encode(repeat)}") }
+            navController.navigate("nav_add_item/${Uri.encode(id)}/${Uri.encode(description)}" +
+                    "/${Uri.encode(date)}/${Uri.encode(repeat)}/${Uri.encode(endDate)}") }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -195,7 +246,7 @@ fun CountdownCard(id: String,
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Red40, shape = RoundedCornerShape(24.dp)),
+                    .background(daysIndicatorColor, shape = RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -210,16 +261,15 @@ fun CountdownCard(id: String,
             Column {
                 Text(
                     text = "Days To ",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium.copy(color = textColor)
                 )
 
                 // description
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyLarge
+                    style =  MaterialTheme.typography.bodyLarge.copy(color = textColor)
                 )
             }
-
         }
     }
 }
