@@ -3,8 +3,7 @@ package com.cs407.wellnest.data
 import java.time.LocalDate
 import androidx.room.*
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.flow.Flow
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -15,10 +14,13 @@ data class CountdownEntity(
     val description: String,
     val repeatOption: String,
     val endDate: String? = null // only for repeating events
-    )
+)
 
 @Dao
 interface CountdownDao {
+    @Query("SELECT * FROM countdowns ORDER BY targetDate ASC")
+    fun getCountdownItemsFlow(): Flow<List<CountdownEntity>>
+
     @Query("SELECT * FROM countdowns ORDER BY targetDate ASC")
     suspend fun getCountdownItems(): List<CountdownEntity>
 
@@ -26,18 +28,21 @@ interface CountdownDao {
     suspend fun getCountdownByIdAndDate(id: String, targetDate: String): CountdownEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertCountdown(countdown: CountdownEntity)
+    suspend fun insertCountdown(countdown: CountdownEntity)
 
-    @Delete
-    suspend fun deleteCountdown(countdown: CountdownEntity)
+    @Update
+    suspend fun updateCountdown(countdown: CountdownEntity)
+
+    @Query("DELETE FROM countdowns WHERE id = :id")
+    suspend fun deleteCountdown(id: String)
 
     @Query("DELETE FROM countdowns WHERE targetDate < :today")
     suspend fun deleteExpiredCountdown(
-        today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+        today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
     )
 }
 
-@Database(entities = [CountdownEntity::class], version = 4)
+@Database(entities = [CountdownEntity::class], version = 12)
 abstract class AppDatabase1 : RoomDatabase() {
     abstract fun countdownDao(): CountdownDao
     companion object {

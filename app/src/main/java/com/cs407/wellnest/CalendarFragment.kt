@@ -1,6 +1,7 @@
 package com.cs407.wellnest
 
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,11 +41,16 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: CountdownViewModel = viewModel()) {
+    val countdownState = viewModel.getCountdownItemsFlow().collectAsState(initial = emptyList())
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
+
+    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+
     LaunchedEffect(Unit) {
         viewModel.deleteExpiredCountdown()
         countdownItems.clear()
         countdownItems.addAll(viewModel.getCountdownItems())
+        Log.d("CalendarScreen", "Countdown State Value: ${countdownState.value}")
     }
 
     // Colors based on dark mode
@@ -59,18 +66,23 @@ fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolea
     val today = LocalDate.now()
     val formattedDate = today.format(DateTimeFormatter.ofPattern("EEEE MMM d, yyyy"))
 
-    // Get a list of CalendarDays from the countdown items
-    val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-    val calendarDays = countdownItems.map { item ->
-        val parsedDate = LocalDate.parse(item.targetDate, formatter)
-        val calendarDay = Calendar.getInstance().apply {
-            set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
-
+    // Convert countdown dates to Calendar objects
+    val targetDates = remember(countdownState.value) {
+        countdownState.value.map { countdown ->
+            val parsedDate = LocalDate.parse(countdown.targetDate, formatter)
+            Calendar.getInstance().apply {
+                set(parsedDate.year, parsedDate.monthValue - 1, parsedDate.dayOfMonth)
+            }
         }
-        CalendarDay(calendarDay).apply {
+    }
+    Log.d("CalendarScreen", "Target Dates: $targetDates")
+
+    val calendarDays = targetDates.map {
+        CalendarDay(it).apply {
             backgroundResource = R.drawable.ic_target_date
         }
     }
+    Log.d("CalendarDays", calendarDays.toString())
 
     Column(
         modifier = Modifier
@@ -142,14 +154,14 @@ fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolea
                                 // Delete all occurrences of the repeating event
                                 val allOccurrences = countdownItems.filter { it.id == item.id }
                                 allOccurrences.forEach { countdown ->
-                                    viewModel.deleteCountdown(countdown)
+                                    viewModel.deleteCountdown(countdown.id)
                                 }
                                 countdownItems.removeAll(allOccurrences)
                             }
                         } else {
                             // Delete only the current occurrence
                             viewModel.viewModelScope.launch {
-                                viewModel.deleteCountdown(item)
+                                viewModel.deleteCountdown(item.id)
                                 countdownItems.remove(item)
                             }
                         }
