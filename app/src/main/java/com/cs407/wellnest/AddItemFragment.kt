@@ -36,7 +36,7 @@ import java.util.UUID
 @Composable
 fun AddItemFragment(navController: NavController,
                     isDarkMode: MutableState<Boolean>,
-                    viewModel: CountdownViewModel = viewModel()) {
+                    viewModel: CalendarViewModel = viewModel()) {
     val context = LocalContext.current
 
     val backStackEntry = navController.currentBackStackEntry
@@ -155,6 +155,7 @@ fun AddItemFragment(navController: NavController,
                             IconText(
                                 icon = R.drawable.ic_calendar,
                                 text = eventEndDate,
+                                textColor = textColor,
                                 onClick = { DatePickerDialog(
                                     navController.context,
                                     { _, year, month, day ->
@@ -289,7 +290,7 @@ fun AddItemFragment(navController: NavController,
             SuggestionItem(
                 text = suggestion,
                 onRemove = { suggestions.remove(suggestion) },
-                onClick = { eventDesc = suggestion }
+                onClick = { eventDesc = suggestion },
                 isDarkMode = isDarkMode // Pass isDarkMode
             )
         }
@@ -315,7 +316,10 @@ fun IconText(icon: Int, text: String, textColor: Color, onClick: () -> Unit) {
 }
 
 @Composable
-fun SuggestionItem(text: String, onRemove: () -> Unit , isDarkMode: MutableState<Boolean>) {
+fun SuggestionItem(text: String,
+                   onRemove: () -> Unit,
+                   onClick: () -> Unit,
+                   isDarkMode: MutableState<Boolean>) {
     val backgroundColor = if (isDarkMode.value) MidPink else LightPink
     val textColor = if (isDarkMode.value) Color.White else Color.Black
 
