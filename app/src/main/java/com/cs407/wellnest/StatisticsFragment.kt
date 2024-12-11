@@ -113,23 +113,29 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .padding(16.dp)
     ) {
         Text(
             text = "Health Summary",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         // Tabs for Day, Week, Month
-        TabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = backgroundColor,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             listOf("Day", "Week", "Month").forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
-                    text = { Text(title) }
+                    text = { Text(title, color = textColor) }
                 )
             }
         }
@@ -281,8 +287,8 @@ fun TimeRangeContent(
                         modifier = Modifier.size(200.dp)
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(goal.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = Color.Gray)
+                        Text(goal.toString(), fontSize = 24.sp, color = textColor, fontWeight = FontWeight.Bold)
+                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = textColor)
                     }
                 }
             }
