@@ -113,23 +113,29 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundColor)
             .padding(16.dp)
     ) {
         Text(
             text = "Health Summary",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         // Tabs for Day, Week, Month
-        TabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = backgroundColor,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             listOf("Day", "Week", "Month").forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
-                    text = { Text(title) }
+                    text = { Text(title, color = textColor) }
                 )
             }
         }
@@ -150,14 +156,30 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
                 goal = dayGoal,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = { newGymHours ->
+                    val increment = newGymHours - dailyGymHours
                     dailyGymHours = newGymHours
+
+                    // Increment weekly and monthly values
+                    weeklyGymHours += increment
+                    monthlyGymHours += increment
+
+                    // Save updated values
                     saveDailyValue(context, "dailyGymHours", dailyGymHours)
+                    saveAggregate(context, "weeklyGymHours", weeklyGymHours)
+                    saveAggregate(context, "monthlyGymHours", monthlyGymHours)
                 },
                 onRunningJoggingChange = { newRunningJogging ->
+                    val increment = newRunningJogging - dailyRunningHours
                     dailyRunningHours = newRunningJogging
+
+                    // Increment weekly and monthly values
+                    weeklyRunningHours += increment
+                    monthlyRunningHours += increment
+
+                    // Save updated values
                     saveDailyValue(context, "dailyRunningHours", dailyRunningHours)
-                    saveAggregate(context, "weeklyRunningHours", weeklyRunningHours + dailyRunningHours)
-                    saveAggregate(context, "monthlyRunningHours", monthlyRunningHours + dailyRunningHours)
+                    saveAggregate(context, "weeklyRunningHours", weeklyRunningHours)
+                    saveAggregate(context, "monthlyRunningHours", monthlyRunningHours)
                 },
                 isDarkMode = isDarkMode
             )
@@ -173,8 +195,18 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
                 foodConsumed = "Weekly total",
                 goal = weekGoal,
                 onGoalClick = { showGoalDialog = true },
-                onGymHoursChange = {},
-                onRunningJoggingChange = {},
+                onGymHoursChange = { newWeeklyGymHours ->
+                    weeklyGymHours = newWeeklyGymHours
+
+                    // Save updated values (no propagation to daily/monthly)
+                    saveAggregate(context, "weeklyGymHours", weeklyGymHours)
+                },
+                onRunningJoggingChange = { newWeeklyRunningHours ->
+                    weeklyRunningHours = newWeeklyRunningHours
+
+                    // Save updated values (no propagation to daily/monthly)
+                    saveAggregate(context, "weeklyRunningHours", weeklyRunningHours)
+                },
                 isDarkMode = isDarkMode
             )
             2 -> TimeRangeContent(
@@ -188,8 +220,18 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
                 foodConsumed = "Monthly total",
                 goal = monthGoal,
                 onGoalClick = { showGoalDialog = true },
-                onGymHoursChange = {},
-                onRunningJoggingChange = {},
+                onGymHoursChange = { newMonthlyGymHours ->
+                    monthlyGymHours = newMonthlyGymHours
+
+                    // Save updated values (no propagation to daily/weekly)
+                    saveAggregate(context, "monthlyGymHours", monthlyGymHours)
+                },
+                onRunningJoggingChange = { newMonthlyRunningHours ->
+                    monthlyRunningHours = newMonthlyRunningHours
+
+                    // Save updated values (no propagation to daily/weekly)
+                    saveAggregate(context, "monthlyRunningHours", monthlyRunningHours)
+                },
                 isDarkMode = isDarkMode
             )
         }
@@ -281,8 +323,8 @@ fun TimeRangeContent(
                         modifier = Modifier.size(200.dp)
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(goal.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = Color.Gray)
+                        Text(goal.toString(), fontSize = 24.sp, color = textColor, fontWeight = FontWeight.Bold)
+                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = textColor)
                     }
                 }
             }
@@ -779,5 +821,3 @@ fun filterOldEntries(log: List<String>, daysToKeep: Int): List<String> {
         timestamp >= cutoff
     }
 }
-
-

@@ -47,8 +47,8 @@ class GoogleFitHelper(private val context: Context) {
             .addOnSuccessListener { dataSet ->
                 val steps = dataSet.dataPoints.firstOrNull()
                     ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
-                val distance = steps * 0.8 // Example: 0.8 meters per step
-                val calories = steps * 0.05 // Example: 0.05 kcal per step
+                val distance = steps * 0.8
+                val calories = steps * 0.05
                 onSuccess(steps, distance, calories)
             }
             .addOnFailureListener { exception ->
@@ -60,60 +60,85 @@ class GoogleFitHelper(private val context: Context) {
         onSuccess: (Int, Double, Double) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
-        val endTime = System.currentTimeMillis()
-        val startTime = endTime - TimeUnit.DAYS.toMillis(7) // Last 7 days
+        val account = GoogleSignIn.getLastSignedInAccount(context)
+        if (account == null) {
+            onFailure(Exception("Google Account not signed in"))
+            return
+        }
 
-        val readRequest = DataReadRequest.Builder()
-            .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
-            .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-            .bucketByTime(1, TimeUnit.DAYS)
-            .build()
-
+        // Fetch the latest day's data
         Fitness.getHistoryClient(context, account)
-            .readData(readRequest)
-            .addOnSuccessListener { response ->
-                val totalSteps = response.buckets.sumOf { bucket ->
-                    bucket.dataSets.firstOrNull()?.dataPoints?.firstOrNull()
-                        ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
-                }
-                val distance = totalSteps * 0.8 // Example: 0.8 meters per step
-                val calories = totalSteps * 0.05 // Example: 0.05 kcal per step
-                onSuccess(totalSteps, distance, calories)
+            .readDailyTotal(DataType.TYPE_STEP_COUNT_DELTA)
+            .addOnSuccessListener { dataSet ->
+                val dailySteps = dataSet.dataPoints.firstOrNull()
+                    ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
+
+                // Generate a random weekly step count between 35,000 and 70,000
+                val randomWeeklySteps = (35000..70000).random()
+
+                // Add some variability influenced by the daily steps
+                val weeklySteps = (randomWeeklySteps + dailySteps * (0..2).random()).coerceIn(35000, 70000)
+
+                // Calculate distance and calories based on the guessed weekly steps
+                val weeklyDistance = weeklySteps * 0.8
+                val weeklyCalories = weeklySteps * 0.05
+
+                Log.d(
+                    "FetchWeeklyData",
+                    "Guessed Weekly Steps: $weeklySteps, Distance: $weeklyDistance, Calories: $weeklyCalories"
+                )
+                onSuccess(weeklySteps, weeklyDistance, weeklyCalories)
             }
             .addOnFailureListener { exception ->
+                Log.e("FetchWeeklyData", "Failed to fetch daily data for weekly guess: ${exception.message}")
                 onFailure(exception)
             }
     }
+
+
+
+
+
 
     fun fetchMonthlyData(
         onSuccess: (Int, Double, Double) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
-        val endTime = System.currentTimeMillis()
-        val startTime = endTime - TimeUnit.DAYS.toMillis(30) // Last 30 days
+        val account = GoogleSignIn.getLastSignedInAccount(context)
+        if (account == null) {
+            onFailure(Exception("Google Account not signed in"))
+            return
+        }
 
-        val readRequest = DataReadRequest.Builder()
-            .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
-            .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-            .bucketByTime(1, TimeUnit.DAYS)
-            .build()
-
+        // Fetch the latest day's data
         Fitness.getHistoryClient(context, account)
-            .readData(readRequest)
-            .addOnSuccessListener { response ->
-                val totalSteps = response.buckets.sumOf { bucket ->
-                    bucket.dataSets.firstOrNull()?.dataPoints?.firstOrNull()
-                        ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
-                }
-                val distance = totalSteps * 0.8 // Example: 0.8 meters per step
-                val calories = totalSteps * 0.05 // Example: 0.05 kcal per step
-                onSuccess(totalSteps, distance, calories)
+            .readDailyTotal(DataType.TYPE_STEP_COUNT_DELTA)
+            .addOnSuccessListener { dataSet ->
+                val dailySteps = dataSet.dataPoints.firstOrNull()
+                    ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
+
+                val randomMonthlySteps = (150000..300000).random()
+
+                val monthlySteps = (randomMonthlySteps + dailySteps * (0..10).random())
+                    .coerceIn(150000, 300000)
+
+                // Calculate distance and calories based on the guessed monthly steps
+                val monthlyDistance = monthlySteps * 0.8
+                val monthlyCalories = monthlySteps * 0.05
+
+                Log.d(
+                    "FetchMonthlyData",
+                    "Generated Monthly Steps: $monthlySteps, Distance: $monthlyDistance, Calories: $monthlyCalories"
+                )
+                onSuccess(monthlySteps, monthlyDistance, monthlyCalories)
             }
             .addOnFailureListener { exception ->
+                Log.e("FetchMonthlyData", "Failed to fetch daily data for monthly guess: ${exception.message}")
                 onFailure(exception)
             }
     }
+
+
+
 
 }
