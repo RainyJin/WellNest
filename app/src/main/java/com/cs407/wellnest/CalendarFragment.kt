@@ -40,7 +40,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: CountdownViewModel = viewModel()) {
+fun CalendarScreen(navController: NavController, isDarkMode: MutableState<Boolean>, viewModel: CalendarViewModel = viewModel()) {
     val countdownState = viewModel.getCountdownItemsFlow().collectAsState(initial = emptyList())
     val countdownItems = remember { mutableStateListOf<CountdownEntity>() }
 
