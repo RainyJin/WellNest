@@ -49,11 +49,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppDatabase.getDatabase(this)
         enableEdgeToEdge()
         setContent {
+            val isDarkMode = remember { mutableStateOf(false) } // Centralized state for dark mode
             WellNestTheme {
                 val navController = rememberNavController()
                 NavHost(
@@ -75,6 +82,9 @@ class MainActivity : ComponentActivity() {
 
         // Initialize NotificationHelper
         NotificationHelper(this).createNotificationChannel()
+
+        // Request location permission
+        requestLocationPermission()
     }
 }
 
@@ -92,19 +102,22 @@ fun MainScreen() {
             startDestination = "nav_todo",
             Modifier.padding(innerPadding)
         ) {
-            composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
-            composable("nav_calendar") { CalendarScreen(navController) } // Reference to the Calendar screen
+            composable("nav_todo") { TodoScreen(navController, isDarkMode) } // Reference to the To-Do screen
+            composable("nav_calendar") { CalendarScreen(navController, isDarkMode) } // Reference to the Calendar screen
             composable("nav_stat") { StatisticsScreen(isDarkMode) } // Reference to the Statistics screen
-            composable("nav_profile") { ProfileScreen(navController) } // Reference to the Profile screen
-            composable("nav_about_us") { AboutUsScreen(navController) }
-            composable("nav_add_item") { AddItemFragment(navController) }
-            composable("survey") { SurveyScreen(navController) }
+            composable("nav_profile") { ProfileScreen(navController,isDarkMode) } // Reference to the Profile screen
+            composable("nav_about_us") { AboutUsScreen(navController, isDarkMode) }
+            composable("nav_add_item") { AddItemFragment(navController, isDarkMode) }
+            composable("survey") { SurveyScreen(navController, isDarkMode) }
 
-            composable("meditation") { MeditationScreen(navController)}
-            composable("pet_profile") { PetProfileScreen(navController) }
-            composable("help") { HelpScreen(navController) }
-            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}") { AddItemFragment(navController) }
-            composable("privacy") { PrivacyScreen(navController) }
+            composable("meditation") { MeditationScreen(navController, isDarkMode)}
+            composable("pet_profile") { PetProfileScreen(navController, isDarkMode) }
+
+            composable("help") { HelpScreen(navController, isDarkMode) }
+            composable("nav_add_item/{eventId}/{eventDesc}/{eventDate}/{eventRepeat}/{eventEndDate}") { AddItemFragment(navController, isDarkMode) }
+            composable("privacy") { PrivacyScreen(navController, isDarkMode) }
+
+            
 
             // Editing a todo
             composable(
@@ -120,11 +133,12 @@ fun MainScreen() {
 
                 val backgroundColorInt = backStackEntry.arguments?.getInt("backgroundColor") ?: 0xFF5BBAE9.toInt()
                 val backgroundColor = Color(backgroundColorInt)
-                
+
                 EditTodoScreen(
                     itemId = todoId,
                     navController = navController,
-                    backgroundColor = backgroundColor
+                    backgroundColor = backgroundColor,
+                    isDarkMode = isDarkMode
                 )
             }
         }

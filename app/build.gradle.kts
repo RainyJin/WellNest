@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp") version "1.9.0-1.0.13"
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -69,6 +70,7 @@ dependencies {
     implementation(libs.androidx.room.ktx) // Using calendar view for calendar
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.common)
+    implementation(libs.play.services.location)
     annotationProcessor(libs.androidx.room.compiler) // Only if you're using annotation processing in Java
     ksp(libs.androidx.room.compiler)                // For Kotlin Symbol Processing (recommended for Kotlin)
     implementation(libs.androidx.room.ktx)
@@ -89,6 +91,7 @@ dependencies {
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt:coil-gif:2.5.0")
+    implementation ("com.google.android.gms:play-services-base:18.2.0")
     implementation ("androidx.activity:activity-compose:1.7.2")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
     implementation ("androidx.navigation:navigation-compose:2.7.0")
@@ -96,8 +99,16 @@ dependencies {
     implementation("com.google.android.gms:play-services-fitness:21.0.1")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
+    implementation ("androidx.compose.material3:material3:1.3.1")
+
+    implementation ("androidx.compose.material3:material3:1.2.0-alpha08")
+    implementation ("androidx.compose.ui:ui:1.5.0")
+
+
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation("io.github.sceneview:sceneview:2.2.1")
+
+
 }
