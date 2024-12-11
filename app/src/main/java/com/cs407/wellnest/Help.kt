@@ -74,11 +74,13 @@ fun HelpContent(modifier: Modifier = Modifier, navController: NavController, isD
             text = "Welcome to WellNest",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
             text = "WellNest helps you manage your daily routines such as taking medication, meditating, and keeping track of your schedule.",
             fontSize = 16.sp,
+            color = textColor,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
