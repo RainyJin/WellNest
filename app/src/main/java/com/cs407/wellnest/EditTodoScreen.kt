@@ -104,10 +104,10 @@ fun EditTodoScreen(itemId: String?,
         else -> Color.Black to Color.Gray // Default fallback
     }
 
-    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val effectiveBackgroundColor = if (isDarkMode.value) Color.Black else backgroundColor
     val cardColor = if (isDarkMode.value) Color.DarkGray else Color.White
     val textColor = if (isDarkMode.value) Color.White else Color.Black
-    val hintColor = if (isDarkMode.value) Color.LightGray else Color.Gray
+    val hintColor = if (isDarkMode.value) Color.White else Color.Gray
     val buttonColor = if (isDarkMode.value) Color(0xFF1E88E5) else Color(0xFFBBDEFB)
     val suggestionBackgroundColor = if (isDarkMode.value) Color(0xFF424242) else suggestionColor
 
@@ -116,7 +116,7 @@ fun EditTodoScreen(itemId: String?,
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(effectiveBackgroundColor)
             .padding(16.dp)
     ) {
         // Card containing the goal, description, calendar, and repeat options
@@ -138,12 +138,12 @@ fun EditTodoScreen(itemId: String?,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Edit Goal", fontSize = 24.sp, color = Color.Black)
+                    Text(text = "Edit Goal", fontSize = 24.sp, color = textColor)
                     IconButton(onClick = { navController.navigate("nav_todo") }) { // Navigate to Todo List screen
                         Icon(
                             painter = painterResource(id = R.drawable.ic_close),
                             contentDescription = "Close",
-                            tint = Color.Black
+                            tint = textColor
                         )
                     }
                 }
@@ -218,7 +218,9 @@ fun EditTodoScreen(itemId: String?,
                             focusedBorderColor = textColor,
                             unfocusedBorderColor = hintColor,
                             errorBorderColor = MaterialTheme.colorScheme.error,
-                            cursorColor = textColor
+                            cursorColor = textColor,
+                            focusedLabelColor = textColor,
+                            unfocusedLabelColor = textColor
                         )
                     )
                 }
@@ -230,7 +232,17 @@ fun EditTodoScreen(itemId: String?,
                     value = descriptionText,
                     onValueChange = { descriptionText = it },
                     label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedBorderColor = textColor,
+                        unfocusedBorderColor = hintColor,
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                        cursorColor = textColor,
+                        focusedLabelColor = textColor,
+                        unfocusedLabelColor = textColor
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -276,7 +288,7 @@ fun EditTodoScreen(itemId: String?,
                         Icon(
                             painter = painterResource(id = R.drawable.ic_calendar),
                             contentDescription = "Calendar",
-                            tint = Color.Black,
+                            tint = textColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -284,7 +296,7 @@ fun EditTodoScreen(itemId: String?,
                         Text(
                             text = selectedRepeatOption,
                             fontSize = 16.sp,
-                            color = Color.Black,
+                            color = textColor,
                             modifier = Modifier
                                 .clickable { expandedDropdown = !expandedDropdown }
                                 .padding(8.dp)
@@ -352,7 +364,7 @@ fun EditTodoScreen(itemId: String?,
         Spacer(modifier = Modifier.height(10.dp))
 
         // Suggestions Section (outside of Card)
-        Text("Suggestions", fontSize = 20.sp, color = Color.Black)
+        Text("Suggestions", fontSize = 20.sp, color = textColor)
 
         val suggestions = listOf(
             "Final Project Presentation",
@@ -405,7 +417,7 @@ fun SuggestionItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(suggestion, fontSize = 16.sp, color = Color.Black)
+        Text(suggestion, fontSize = 16.sp, color = textColor)
         IconButton(onClick = {}) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),

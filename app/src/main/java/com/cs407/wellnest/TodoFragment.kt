@@ -85,7 +85,6 @@ fun TodoScreen(navController: NavController, isDarkMode: MutableState<Boolean>, 
     val cardTextColor = if (isDarkMode.value) Color.White else Color.DarkGray
 
 
-
     // Set up camera and rotation for the 3D view
     val cameraNode = rememberCameraNode(engine).apply {
         position = Position(x = 0.0f, y = 0.6f, z = 2.4f)
