@@ -22,6 +22,7 @@ import com.cs407.wellnest.utils.GoogleFitHelper
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import com.cs407.wellnest.SharedPrefsHelper
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -322,53 +323,188 @@ fun TimeRangeContent(
                         strokeWidth = 12.dp,
                         modifier = Modifier.size(200.dp)
                     )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(goal.toString(), fontSize = 24.sp, color = textColor, fontWeight = FontWeight.Bold)
-                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = textColor)
-                    }
-                }
-            }
-        }
-
-
-        // Info Cards
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                InfoBox("Steps", "$steps steps", Color(0xFFADD8E6))
-                InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5))
-            }
-        }
-
-
-        // Distance and Sleep
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                InfoBox("Distance", "$runDistance m", Color(0xFF98FB98))
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFD8BFD8), RoundedCornerShape(8.dp))
-                        .clickable { showSleepDialog = true }
-                        .padding(16.dp)
-                        .width(160.dp)
-                ) {
-                    Column {
-                        Text("Sleep", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Spacer(modifier = Modifier.height(4.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(top = 8.dp) // Adjust padding to position icon
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_directions_walk_24),
+                            contentDescription = "Goal Icon",
+                            tint = textColor, // Adjust tint if needed
+                            modifier = Modifier
+                                .size(48.dp) // Adjust size based on your preference
+                                .padding(bottom = 8.dp) // Add padding to separate the icon and text
+                        )
                         Text(
-                            text = if (sleepLog.isNotEmpty()) sleepLog.firstOrNull() ?: "$sleep hours" else "$sleep hours",
-                            fontSize = 18.sp,
-                            color = Color.Black
+                            text = goal.toString(),
+                            fontSize = 24.sp,
+                            color = textColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${(steps / goal.toFloat() * 100).toInt()}%",
+                            fontSize = 16.sp,
+                            color = textColor
                         )
                     }
                 }
             }
+
         }
+
+
+        // Info Cards Section
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min) // Ensure row respects the tallest child
+                    .padding(horizontal = 2.dp), // Match the horizontal padding of the lower cards
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Steps Section
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFADD8E6), RoundedCornerShape(8.dp))
+                        .weight(1f) // Equal weight for cards
+                        .fillMaxHeight() // Match the height of the tallest sibling
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.steps), // Replace with the actual resource name for steps.png
+                            contentDescription = "Steps Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                        Column {
+                            Text("Steps", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("$steps steps", fontSize = 18.sp, color = Color.Black)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp)) // Consistent spacing between cards
+
+                // Calories Section
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFFFE4B5), RoundedCornerShape(8.dp))
+                        .weight(1f) // Equal weight for cards
+                        .fillMaxHeight() // Match the height of the tallest sibling
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.calories), // Replace with the actual resource name for calories.png
+                            contentDescription = "Calories Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                        Column {
+                            Text("Calories", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("$calories kcal", fontSize = 18.sp, color = Color.Black)
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // Row for Distance and Sleep Section
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min), // Ensure row respects the tallest child
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Distance Section
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFF98FB98), RoundedCornerShape(8.dp))
+                        .weight(1f) // Ensure both cards have equal weight
+                        .fillMaxHeight() // Fill the height to match the tallest card
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.distance), // Replace with the actual resource name
+                            contentDescription = "Distance Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                        Column {
+                            Text("Distance", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "$runDistance m",
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp)) // Space between Distance and Sleep sections
+
+                // Sleep Section
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFD8BFD8), RoundedCornerShape(8.dp))
+                        .weight(1f) // Ensure both cards have equal weight
+                        .fillMaxHeight() // Fill the height to match the tallest card
+                        .clickable { showSleepDialog = true }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sleeping), // Replace with the actual resource name
+                            contentDescription = "Sleep Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                        Column {
+                            Text("Sleep", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (sleepLog.isNotEmpty()) {
+                                    "${sleepLog.firstOrNull() ?: sleep} hours"
+                                } else {
+                                    "$sleep hours"
+                                },
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
+
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
 
 
         // Gym Hours
@@ -384,18 +520,27 @@ fun TimeRangeContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("Gym Hours", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Text(
-                            text = "$gymHours hours",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier.clickable {
-                                selectedValue = gymHours.toString()
-                                showGymDialog = true
-                            }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.gym),
+                            contentDescription = "Gym Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Gym Hours", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(
+                                text = "$gymHours hours",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black,
+                                modifier = Modifier.clickable {
+                                    selectedValue = gymHours.toString()
+                                    showGymDialog = true
+                                }
+                            )
+                        }
                     }
                     Row {
                         Button(onClick = { onGymHoursChange(gymHours + 0.5f) }) {
@@ -423,18 +568,27 @@ fun TimeRangeContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("Running/Jogging", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Text(
-                            text = "$runningJogging hours",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier.clickable {
-                                selectedValue = runningJogging.toString()
-                                showRunningJoggingDialog = true
-                            }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.running),
+                            contentDescription = "Running Icon",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text("Running/Jogging", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(
+                                text = "$runningJogging hours",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black,
+                                modifier = Modifier.clickable {
+                                    selectedValue = runningJogging.toString()
+                                    showRunningJoggingDialog = true
+                                }
+                            )
+                        }
                     }
                     Row {
                         Button(onClick = { onRunningJoggingChange(runningJogging + 0.5f) }) {
@@ -449,6 +603,7 @@ fun TimeRangeContent(
         }
 
 
+
         // Food Section
         item {
             Box(
@@ -458,14 +613,23 @@ fun TimeRangeContent(
                     .clickable { showFoodDialog = true }
                     .padding(16.dp)
             ) {
-                Column {
-                    Text("Food", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = if (foodLog.isNotEmpty()) foodLog.firstOrNull() ?: "No recent food" else "No recent food",
-                        fontSize = 18.sp,
-                        color = Color.Black
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.food),
+                        contentDescription = "Food Icon",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Black
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text("Food", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (foodLog.isNotEmpty()) foodLog.firstOrNull() ?: "No recent food" else "No recent food",
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
         }
