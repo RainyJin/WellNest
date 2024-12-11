@@ -56,55 +56,64 @@ class GoogleFitHelper(private val context: Context) {
             }
     }
 
-    fun fetchWeekData(
-        onSuccess: (Int) -> Unit,
+    fun fetchWeeklyData(
+        onSuccess: (Int, Double, Double) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
         val endTime = System.currentTimeMillis()
-        val startTime = endTime - TimeUnit.DAYS.toMillis(7)
+        val startTime = endTime - TimeUnit.DAYS.toMillis(7) // Last 7 days
 
         val readRequest = DataReadRequest.Builder()
             .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
-            .bucketByTime(7, TimeUnit.DAYS)
             .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+            .bucketByTime(1, TimeUnit.DAYS)
             .build()
 
         Fitness.getHistoryClient(context, account)
             .readData(readRequest)
-            .addOnSuccessListener { dataReadResponse ->
-                val steps = dataReadResponse.buckets.firstOrNull()
-                    ?.dataSets?.firstOrNull()
-                    ?.dataPoints?.firstOrNull()
-                    ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
-                onSuccess(steps)
+            .addOnSuccessListener { response ->
+                val totalSteps = response.buckets.sumOf { bucket ->
+                    bucket.dataSets.firstOrNull()?.dataPoints?.firstOrNull()
+                        ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
+                }
+                val distance = totalSteps * 0.8 // Example: 0.8 meters per step
+                val calories = totalSteps * 0.05 // Example: 0.05 kcal per step
+                onSuccess(totalSteps, distance, calories)
             }
-            .addOnFailureListener(onFailure)
+            .addOnFailureListener { exception ->
+                onFailure(exception)
+            }
     }
 
-    fun fetchMonthData(
-        onSuccess: (Int) -> Unit,
+    fun fetchMonthlyData(
+        onSuccess: (Int, Double, Double) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
         val endTime = System.currentTimeMillis()
-        val startTime = endTime - TimeUnit.DAYS.toMillis(30)
+        val startTime = endTime - TimeUnit.DAYS.toMillis(30) // Last 30 days
 
         val readRequest = DataReadRequest.Builder()
             .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
-            .bucketByTime(30, TimeUnit.DAYS)
             .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+            .bucketByTime(1, TimeUnit.DAYS)
             .build()
 
         Fitness.getHistoryClient(context, account)
             .readData(readRequest)
-            .addOnSuccessListener { dataReadResponse ->
-                val steps = dataReadResponse.buckets.firstOrNull()
-                    ?.dataSets?.firstOrNull()
-                    ?.dataPoints?.firstOrNull()
-                    ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
-                onSuccess(steps)
+            .addOnSuccessListener { response ->
+                val totalSteps = response.buckets.sumOf { bucket ->
+                    bucket.dataSets.firstOrNull()?.dataPoints?.firstOrNull()
+                        ?.getValue(Field.FIELD_STEPS)?.asInt() ?: 0
+                }
+                val distance = totalSteps * 0.8 // Example: 0.8 meters per step
+                val calories = totalSteps * 0.05 // Example: 0.05 kcal per step
+                onSuccess(totalSteps, distance, calories)
             }
-            .addOnFailureListener(onFailure)
+            .addOnFailureListener { exception ->
+                onFailure(exception)
+            }
     }
+
 }
