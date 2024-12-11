@@ -20,7 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.wellnest.utils.GoogleFitHelper
 import androidx.compose.foundation.lazy.items
-
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.cs407.wellnest.SharedPrefsHelper
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 
@@ -33,16 +37,17 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     val progressColor = if (isDarkMode.value) Color.Green else Color.Blue
-    val tabSelectedColor = if (isDarkMode.value) Color.Gray else Color.LightGray
     val cardBackgroundColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
 
+    // Independent goals for day, week, month
+    var dayGoal by remember { mutableStateOf(SharedPrefsHelper.getInt(context, "dayGoal", 10000)) }
+    var weekGoal by remember { mutableStateOf(SharedPrefsHelper.getInt(context, "weekGoal", 70000)) }
+    var monthGoal by remember { mutableStateOf(SharedPrefsHelper.getInt(context, "monthGoal", 300000)) }
 
-    // Health states for Day, Week, and Month tabs
+    // Steps data
     var daySteps by remember { mutableStateOf(0) }
     var weekSteps by remember { mutableStateOf(0) }
     var monthSteps by remember { mutableStateOf(0) }
-    var stepGoal by remember { mutableStateOf(10000) } // Default step goal
-
 
     // Other fields for Day, Week, and Month
     var dayCalories by remember { mutableStateOf(0.0) }
@@ -51,20 +56,29 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     var dayDistance by remember { mutableStateOf(0.0) }
     var weekDistance by remember { mutableStateOf(0.0) }
     var monthDistance by remember { mutableStateOf(0.0) }
-    var sleepHours by remember { mutableStateOf(8) }
-    var gymHours by remember { mutableStateOf(0f) } // Default value set to 0
-    var runningJogging by remember { mutableStateOf(0f) } // Default value set to 0
-    var foodConsumed by remember { mutableStateOf("2,000 kcal") }
+    var sleepLog by remember { mutableStateOf(loadLog(context, "sleepLog")) }
+    var foodLog by remember { mutableStateOf(loadLog(context, "foodLog")) }
 
+    // Gym hours and running/jogging
+    var dailyGymHours by remember { mutableStateOf(0f) }
+    var dailyRunningHours by remember { mutableStateOf(0f) }
+    var weeklyGymHours by remember { mutableStateOf(loadAggregate(context, "weeklyGymHours")) }
+    var monthlyGymHours by remember { mutableStateOf(loadAggregate(context, "monthlyGymHours")) }
+    var weeklyRunningHours by remember { mutableStateOf(loadAggregate(context, "weeklyRunningHours")) }
+    var monthlyRunningHours by remember { mutableStateOf(loadAggregate(context, "monthlyRunningHours")) }
 
-    var selectedTabIndex by remember { mutableStateOf(0) } // Track selected tab index
-    var showGoalDialog by remember { mutableStateOf(false) } // Control GoalDialog visibility
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    var showGoalDialog by remember { mutableStateOf(false) }
+    var showSleepDialog by remember { mutableStateOf(false) }
 
+    // Reset daily values at the end of the day
+    LaunchedEffect(Unit) {
+        resetDailyValues(context)
+    }
 
-    // Check and fetch Google Fit data
+    // Fetch Google Fit data
     LaunchedEffect(Unit) {
         if (googleFitHelper.hasGoogleFitPermissions()) {
-            // Fetch Daily Data
             googleFitHelper.fetchDailyData(
                 onSuccess = { steps, distance, calories ->
                     daySteps = steps
@@ -74,129 +88,139 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
                 onFailure = { exception -> Log.e("StatisticsScreen", "Failed to fetch daily data: ${exception.message}") }
             )
 
-
-            // Fetch Weekly Data
-            googleFitHelper.fetchWeekData(
-                onSuccess = { steps ->
+            googleFitHelper.fetchWeeklyData(
+                onSuccess = { steps, distance, calories ->
                     weekSteps = steps
-                    weekDistance = steps * 0.8
-                    weekCalories = steps * 0.05
+                    weekDistance = distance
+                    weekCalories = calories
                 },
                 onFailure = { exception -> Log.e("StatisticsScreen", "Failed to fetch weekly data: ${exception.message}") }
             )
 
-
-            // Fetch Monthly Data
-            googleFitHelper.fetchMonthData(
-                onSuccess = { steps ->
+            googleFitHelper.fetchMonthlyData(
+                onSuccess = { steps, distance, calories ->
                     monthSteps = steps
-                    monthDistance = steps * 0.8
-                    monthCalories = steps * 0.05
+                    monthDistance = distance
+                    monthCalories = calories
                 },
                 onFailure = { exception -> Log.e("StatisticsScreen", "Failed to fetch monthly data: ${exception.message}") }
             )
-        } else {
-            val activity = context as? ComponentActivity
-            activity?.let {
-                googleFitHelper.requestGoogleFitPermissions(it, requestCode = 1001)
-            }
         }
     }
 
 
+    // UI Layout
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
             .padding(16.dp)
     ) {
         Text(
             text = "Health Summary",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = textColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-
         // Tabs for Day, Week, Month
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = backgroundColor,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        TabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
             listOf("Day", "Week", "Month").forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
-                    text = { Text(title, color = textColor) }
+                    text = { Text(title) }
                 )
             }
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
-
 
         // Display content based on the selected tab
         when (selectedTabIndex) {
             0 -> TimeRangeContent(
+                context = context,
                 steps = daySteps,
                 calories = dayCalories.toInt(),
-                sleep = sleepHours,
+                sleep = sleepLog.size,
                 runDistance = dayDistance.toInt(),
-                gymHours = gymHours,
-                runningJogging = runningJogging,
-                foodConsumed = foodConsumed,
-                goal = stepGoal,
+                gymHours = dailyGymHours,
+                runningJogging = dailyRunningHours,
+                foodConsumed = if (foodLog.isEmpty()) "No recent food" else foodLog.last(),
+                goal = dayGoal,
                 onGoalClick = { showGoalDialog = true },
-                onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
+                onGymHoursChange = { newGymHours ->
+                    dailyGymHours = newGymHours
+                    saveDailyValue(context, "dailyGymHours", dailyGymHours)
+                },
+                onRunningJoggingChange = { newRunningJogging ->
+                    dailyRunningHours = newRunningJogging
+                    saveDailyValue(context, "dailyRunningHours", dailyRunningHours)
+                    saveAggregate(context, "weeklyRunningHours", weeklyRunningHours + dailyRunningHours)
+                    saveAggregate(context, "monthlyRunningHours", monthlyRunningHours + dailyRunningHours)
+                },
                 isDarkMode = isDarkMode
             )
-            1 -> TimeRangeContent(
-                steps = 49564,
-                calories = 22450,
-                sleep = 42,
-                runDistance = 48095,
-                gymHours = gymHours * 7,
-                runningJogging = runningJogging * 7,
-                foodConsumed = "14,000 kcal",
-                goal = stepGoal * 7,
-                onGoalClick = { showGoalDialog = true },
-                onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
-                isDarkMode = isDarkMode
 
+            1 -> TimeRangeContent(
+                context = context,
+                steps = weekSteps,
+                calories = weekCalories.toInt(),
+                sleep = sleepLog.size,
+                runDistance = weekDistance.toInt(),
+                gymHours = weeklyGymHours,
+                runningJogging = weeklyRunningHours,
+                foodConsumed = "Weekly total",
+                goal = weekGoal,
+                onGoalClick = { showGoalDialog = true },
+                onGymHoursChange = {},
+                onRunningJoggingChange = {},
+                isDarkMode = isDarkMode
             )
             2 -> TimeRangeContent(
-                steps = 49564,
-                calories = 22450,
-                sleep = 42,
-                runDistance = 48095,
-                gymHours = gymHours * 30,
-                runningJogging = runningJogging * 30,
-                foodConsumed = "60,000 kcal",
-                goal = stepGoal * 30,
+                context = context,
+                steps = monthSteps,
+                calories = monthCalories.toInt(),
+                sleep = sleepLog.size,
+                runDistance = monthDistance.toInt(),
+                gymHours = monthlyGymHours,
+                runningJogging = monthlyRunningHours,
+                foodConsumed = "Monthly total",
+                goal = monthGoal,
                 onGoalClick = { showGoalDialog = true },
-                onGymHoursChange = { newGymHours -> gymHours = newGymHours },
-
-                onRunningJoggingChange = { newRunningJogging -> runningJogging = newRunningJogging },
+                onGymHoursChange = {},
+                onRunningJoggingChange = {},
                 isDarkMode = isDarkMode
             )
         }
     }
 
-
-    // Show GoalDialog when triggered
+    // Goal dialog for setting the step goal
     if (showGoalDialog) {
         GoalDialog(
-            currentGoal = stepGoal,
-            onGoalChange = { newGoal -> stepGoal = newGoal },
+            currentGoal = when (selectedTabIndex) {
+                0 -> dayGoal
+                1 -> weekGoal
+                else -> monthGoal
+            },
+            onGoalChange = { newGoal ->
+                when (selectedTabIndex) {
+                    0 -> {
+                        dayGoal = newGoal
+                        SharedPrefsHelper.saveInt(context, "dayGoal", dayGoal)
+                    }
+                    1 -> {
+                        weekGoal = newGoal
+                        SharedPrefsHelper.saveInt(context, "weekGoal", weekGoal)
+                    }
+                    2 -> {
+                        monthGoal = newGoal
+                        SharedPrefsHelper.saveInt(context, "monthGoal", monthGoal)
+                    }
+                }
+            },
             onDismiss = { showGoalDialog = false },
             isDarkMode = isDarkMode
-
         )
     }
 }
@@ -204,6 +228,7 @@ fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
 
 @Composable
 fun TimeRangeContent(
+    context: Context,
     steps: Int,
     calories: Int,
     sleep: Int,
@@ -222,13 +247,12 @@ fun TimeRangeContent(
     val textColor = if (isDarkMode.value) Color.White else Color.Black
     val cardColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
 
-
     var showGymDialog by remember { mutableStateOf(false) }
     var showRunningJoggingDialog by remember { mutableStateOf(false) }
     var showFoodDialog by remember { mutableStateOf(false) }
     var showSleepDialog by remember { mutableStateOf(false) }
-    var foodLog by remember { mutableStateOf(listOf<String>()) }
-    var sleepLog by remember { mutableStateOf(listOf<String>()) }
+    var foodLog by remember { mutableStateOf(loadLog(context, "foodLog")) }
+    var sleepLog by remember { mutableStateOf(loadLog(context, "sleepLog")) }
     var selectedValue by remember { mutableStateOf("") }
 
 
@@ -241,7 +265,6 @@ fun TimeRangeContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(cardColor, RoundedCornerShape(8.dp))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -258,8 +281,8 @@ fun TimeRangeContent(
                         modifier = Modifier.size(200.dp)
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(goal.toString(), fontSize = 24.sp, color = textColor, fontWeight = FontWeight.Bold)
-                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = textColor)
+                        Text(goal.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("${(steps / goal.toFloat() * 100).toInt()}%", fontSize = 16.sp, color = Color.Gray)
                     }
                 }
             }
@@ -272,8 +295,8 @@ fun TimeRangeContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                InfoBox("Steps", "$steps steps", cardColor, textColor)
-                InfoBox("Calories", "$calories kcal", cardColor, textColor)
+                InfoBox("Steps", "$steps steps", Color(0xFFADD8E6))
+                InfoBox("Calories", "$calories kcal", Color(0xFFFFE4B5))
             }
         }
 
@@ -284,7 +307,7 @@ fun TimeRangeContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                InfoBox("Distance", "$runDistance m", backgroundColor,  textColor)
+                InfoBox("Distance", "$runDistance m", Color(0xFF98FB98))
                 Box(
                     modifier = Modifier
                         .background(Color(0xFFD8BFD8), RoundedCornerShape(8.dp))
@@ -440,11 +463,13 @@ fun TimeRangeContent(
         SleepLogDialog(
             sleepLog = sleepLog,
             onAddSleep = { newSleep ->
-                sleepLog = listOf(newSleep) + sleepLog
+                addToLog(context, "sleepLog", newSleep) // Save new entry
+                sleepLog = loadLog(context, "sleepLog") // Reload the updated log
             },
             onDismiss = { showSleepDialog = false }
         )
     }
+
 
 
     // Food Dialog
@@ -452,14 +477,14 @@ fun TimeRangeContent(
         FoodLogDialog(
             foodLog = foodLog,
             onAddFood = { newFood ->
-                foodLog = listOf(newFood) + foodLog
+                addToLog(context, "foodLog", newFood) // Save new entry
+                foodLog = loadLog(context, "foodLog") // Reload the updated log
             },
             onDismiss = { showFoodDialog = false }
         )
     }
+
 }
-
-
 
 
 
@@ -472,19 +497,17 @@ fun FoodLogDialog(
     onAddFood: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var newFood by remember { mutableStateOf("") } // State for new food entry
-
+    var newFood by remember { mutableStateOf("") }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Food Log") },
+        onDismissRequest = { onDismiss() },
+        title = { Text("Add Food Log") },
         text = {
             Column {
-                // Food Log List
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp), // Limit the height of the food log list
+                        .height(200.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(foodLog) { food ->
@@ -492,15 +515,12 @@ fun FoodLogDialog(
                     }
                 }
 
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-
-                // Input for new food
                 TextField(
                     value = newFood,
                     onValueChange = { newFood = it },
-                    placeholder = { Text("Enter new food") },
+                    placeholder = { Text("Enter food item") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -509,8 +529,8 @@ fun FoodLogDialog(
             Button(
                 onClick = {
                     if (newFood.isNotBlank()) {
-                        onAddFood(newFood)
-                        newFood = "" // Reset input
+                        onAddFood(newFood) // Add new entry
+                        onDismiss() // Close the dialog
                     }
                 }
             ) {
@@ -518,12 +538,13 @@ fun FoodLogDialog(
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            Button(onClick = { onDismiss() }) {
                 Text("Close")
             }
         }
     )
 }
+
 
 
 
@@ -575,33 +596,22 @@ fun GoalDialog(
     onDismiss: () -> Unit,
     isDarkMode: MutableState<Boolean>
 ) {
+
     val backgroundColor = if (isDarkMode.value) Color.DarkGray else Color.White
     val textColor = if (isDarkMode.value) Color.White else Color.Black
-
-
-// Use `remember` for managing the input goal state
     var inputGoal by remember { mutableStateOf(currentGoal.toString()) }
 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Set Your Goal" , color = textColor) },
+        title = { Text("Set Your Goal") },
         text = {
             Column {
-                Text("Enter your step goal:",color = textColor )
+                Text("Enter your step goal:")
                 TextField(
                     value = inputGoal,
                     onValueChange = { inputGoal = it },
-                    placeholder = { Text("Step Goal") },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor,
-                        cursorColor = textColor,
-                        errorContainerColor = Color.Transparent,
-                        errorIndicatorColor = Color.Red
-                    )
+                    placeholder = { Text("Step Goal") }
                 )
             }
         },
@@ -616,10 +626,9 @@ fun GoalDialog(
         },
         dismissButton = {
             Button(onClick = onDismiss) {
-                Text("Cancel", color = textColor)
+                Text("Cancel")
             }
-        },
-        containerColor = backgroundColor
+        }
     )
 }
 
@@ -629,7 +638,6 @@ fun InfoBox(
     label: String,
     value: String,
     backgroundColor: Color,
-    textColor: Color,
     modifier: Modifier = Modifier.width(160.dp)
 ) {
     Box(
@@ -638,9 +646,9 @@ fun InfoBox(
             .padding(16.dp)
     ) {
         Column {
-            Text(label, fontSize = 14.sp, color = textColor, fontWeight = FontWeight.Bold)
+            Text(label, fontSize = 14.sp, color = Color.Black, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(value, fontSize = 18.sp, color = textColor)
+            Text(value, fontSize = 18.sp, color = Color.Black)
         }
     }
 }
@@ -652,19 +660,17 @@ fun SleepLogDialog(
     onAddSleep: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var newSleep by remember { mutableStateOf("") } // State for new sleep entry
-
+    var newSleep by remember { mutableStateOf("") }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Sleep Log") },
+        onDismissRequest = { onDismiss() },
+        title = { Text("Add Sleep Log") },
         text = {
             Column {
-                // Sleep Log List
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp), // Limit the height of the sleep log list
+                        .height(200.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sleepLog) { sleep ->
@@ -672,11 +678,8 @@ fun SleepLogDialog(
                     }
                 }
 
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-
-                // Input for new sleep
                 TextField(
                     value = newSleep,
                     onValueChange = { newSleep = it },
@@ -689,8 +692,8 @@ fun SleepLogDialog(
             Button(
                 onClick = {
                     if (newSleep.isNotBlank()) {
-                        onAddSleep(newSleep)
-                        newSleep = "" // Reset input
+                        onAddSleep(newSleep) // Add new entry
+                        onDismiss() // Close the dialog
                     }
                 }
             ) {
@@ -698,10 +701,83 @@ fun SleepLogDialog(
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            Button(onClick = { onDismiss() }) {
                 Text("Close")
             }
         }
     )
 }
+
+
+
+
+
+fun loadLog(context: Context, key: String): List<String> {
+    val rawLog = SharedPrefsHelper.getString(context, key, "")
+    return if (rawLog.isEmpty()) listOf() else rawLog.split(",")
+}
+
+fun saveLog(context: Context, key: String, log: List<String>) {
+    SharedPrefsHelper.saveString(context, key, log.joinToString(","))
+}
+
+
+
+fun loadAggregate(context: Context, key: String): Float {
+    return SharedPrefsHelper.getFloat(context, key, 0f)
+}
+
+fun saveAggregate(context: Context, key: String, value: Float) {
+    SharedPrefsHelper.saveFloat(context, key, value)
+}
+
+fun saveDailyValue(context: Context, key: String, value: Float) {
+    SharedPrefsHelper.saveFloat(context, key, value)
+}
+
+fun resetDailyValues(context: Context) {
+    val currentDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+    val lastResetDate = SharedPrefsHelper.getString(context, "lastResetDate", "")
+
+    if (currentDate != lastResetDate) {
+        SharedPrefsHelper.saveString(context, "lastResetDate", currentDate)
+
+        // Add daily values to weekly/monthly aggregates
+        val dailyGymHours = SharedPrefsHelper.getFloat(context, "dailyGymHours", 0f)
+        val dailyRunningHours = SharedPrefsHelper.getFloat(context, "dailyRunningHours", 0f)
+
+        val weeklyGymHours = SharedPrefsHelper.getFloat(context, "weeklyGymHours", 0f) + dailyGymHours
+        val weeklyRunningHours = SharedPrefsHelper.getFloat(context, "weeklyRunningHours", 0f) + dailyRunningHours
+        val monthlyGymHours = SharedPrefsHelper.getFloat(context, "monthlyGymHours", 0f) + dailyGymHours
+        val monthlyRunningHours = SharedPrefsHelper.getFloat(context, "monthlyRunningHours", 0f) + dailyRunningHours
+
+        SharedPrefsHelper.saveFloat(context, "weeklyGymHours", weeklyGymHours)
+        SharedPrefsHelper.saveFloat(context, "weeklyRunningHours", weeklyRunningHours)
+        SharedPrefsHelper.saveFloat(context, "monthlyGymHours", monthlyGymHours)
+        SharedPrefsHelper.saveFloat(context, "monthlyRunningHours", monthlyRunningHours)
+
+        // Reset daily values
+        SharedPrefsHelper.saveFloat(context, "dailyGymHours", 0f)
+        SharedPrefsHelper.saveFloat(context, "dailyRunningHours", 0f)
+    }
+}
+
+
+fun addToLog(context: Context, key: String, newEntry: String) {
+    val rawLog = SharedPrefsHelper.getString(context, key, "")
+    val log = if (rawLog.isEmpty()) mutableListOf() else rawLog.split(",").toMutableList()
+    log.add(0, newEntry) // Add new entry to the beginning of the list
+    saveLog(context, key, log)
+}
+
+
+fun filterOldEntries(log: List<String>, daysToKeep: Int): List<String> {
+    val cutoff = System.currentTimeMillis() - daysToKeep * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+    return log.filter {
+        val parts = it.split("@")
+        val timestamp = parts.getOrNull(1)?.toLongOrNull() ?: 0L
+        timestamp >= cutoff
+    }
+}
+
 
