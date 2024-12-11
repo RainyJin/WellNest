@@ -94,7 +94,7 @@ fun MainScreen() {
         ) {
             composable("nav_todo") { TodoScreen(navController) } // Reference to the To-Do screen
             composable("nav_calendar") { CalendarScreen(navController) } // Reference to the Calendar screen
-            composable("nav_stat") { StatisticsScreen() } // Reference to the Statistics screen
+            composable("nav_stat") { StatisticsScreen(isDarkMode) } // Reference to the Statistics screen
             composable("nav_profile") { ProfileScreen(navController) } // Reference to the Profile screen
             composable("nav_about_us") { AboutUsScreen(navController) }
             composable("nav_add_item") { AddItemFragment(navController) }

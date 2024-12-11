@@ -29,9 +29,15 @@ import java.time.format.DateTimeFormatter
 
 
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(isDarkMode: MutableState<Boolean>) {
     val context = LocalContext.current
     val googleFitHelper = remember { GoogleFitHelper(context) }
+
+    // Define dark mode and light mode colors
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val progressColor = if (isDarkMode.value) Color.Green else Color.Blue
+    val cardBackgroundColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
 
     // Independent goals for day, week, month
     var dayGoal by remember { mutableStateOf(SharedPrefsHelper.getInt(context, "dayGoal", 10000)) }
@@ -152,7 +158,8 @@ fun StatisticsScreen() {
                     saveDailyValue(context, "dailyRunningHours", dailyRunningHours)
                     saveAggregate(context, "weeklyRunningHours", weeklyRunningHours + dailyRunningHours)
                     saveAggregate(context, "monthlyRunningHours", monthlyRunningHours + dailyRunningHours)
-                }
+                },
+                isDarkMode = isDarkMode
             )
 
             1 -> TimeRangeContent(
@@ -167,7 +174,8 @@ fun StatisticsScreen() {
                 goal = weekGoal,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = {},
-                onRunningJoggingChange = {}
+                onRunningJoggingChange = {},
+                isDarkMode = isDarkMode
             )
             2 -> TimeRangeContent(
                 context = context,
@@ -181,7 +189,8 @@ fun StatisticsScreen() {
                 goal = monthGoal,
                 onGoalClick = { showGoalDialog = true },
                 onGymHoursChange = {},
-                onRunningJoggingChange = {}
+                onRunningJoggingChange = {},
+                isDarkMode = isDarkMode
             )
         }
     }
@@ -210,7 +219,8 @@ fun StatisticsScreen() {
                     }
                 }
             },
-            onDismiss = { showGoalDialog = false }
+            onDismiss = { showGoalDialog = false },
+            isDarkMode = isDarkMode
         )
     }
 }
@@ -229,8 +239,14 @@ fun TimeRangeContent(
     goal: Int,
     onGoalClick: () -> Unit,
     onGymHoursChange: (Float) -> Unit,
-    onRunningJoggingChange: (Float) -> Unit
+    onRunningJoggingChange: (Float) -> Unit,
+    isDarkMode: MutableState<Boolean>
 ) {
+
+    val backgroundColor = if (isDarkMode.value) Color.Black else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val cardColor = if (isDarkMode.value) Color.DarkGray else Color.LightGray
+
     var showGymDialog by remember { mutableStateOf(false) }
     var showRunningJoggingDialog by remember { mutableStateOf(false) }
     var showFoodDialog by remember { mutableStateOf(false) }
@@ -260,7 +276,7 @@ fun TimeRangeContent(
                 ) {
                     CircularProgressIndicator(
                         progress = steps / goal.toFloat(),
-                        color = Color.Green,
+                        color = if (isDarkMode.value) Color.Green else Color.Blue,
                         strokeWidth = 12.dp,
                         modifier = Modifier.size(200.dp)
                     )
@@ -577,8 +593,12 @@ fun InputDialog(
 fun GoalDialog(
     currentGoal: Int,
     onGoalChange: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isDarkMode: MutableState<Boolean>
 ) {
+
+    val backgroundColor = if (isDarkMode.value) Color.DarkGray else Color.White
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
     var inputGoal by remember { mutableStateOf(currentGoal.toString()) }
 
 
